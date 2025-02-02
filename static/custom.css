@@ -113,3 +113,89 @@ h3.profile-title {
   text-decoration: underline;
   color: #0d6efd;
 }
+
+
+.home-container {
+  position: relative; 
+  min-height: 100vh;      
+  background-color: #f3f3f3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+  margin: 0;
+  padding: 0;
+  overflow: hidden;      
+}
+
+.home-card {
+  background-color: #a6262b; 
+  color: #fff;
+  padding: clamp(1rem, 2vw, 3rem);
+  border-radius: 1rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  width: clamp(300px, 40vw, 700px);
+}
+
+.top-left-logo {
+  position: absolute;
+  top: clamp(10px, 2vw, 50px);
+  left: clamp(10px, 2vw, 50px);
+}
+
+.top-left-logo-img {
+  width: clamp(150px, 10vw, 200px);
+  height: auto;
+}
+
+.footer-links {
+  background-color: #4f565a; 
+  color: #fff;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+
+.logo-circle {
+  width: 80px;
+  height: 80px;
+  background-color: #fff;
+  color: #a6262b;
+  border-radius: 50%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.home-heading {
+  font-size: clamp(1rem, 2.5vw, 3rem);
+  margin-bottom: 0.5rem;
+}
+
+.home-subheading {
+  font-size: clamp(0.8rem, 2vw, 2rem);
+  margin-bottom: 1rem;
+}
+
+.home-card .btn {
+  font-weight: bold;
+  border-radius: 0.4rem;
+}
+
+.home-card .btn:hover {
+  opacity: 0.9;
+}
+
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.kcl-logo {
+  width: clamp(100px, 20vw, 300px); 
+  height: auto;
+}

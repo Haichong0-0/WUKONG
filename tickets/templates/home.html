@@ -1,23 +1,54 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block body %}
-  <div class="container vh-100">
-    <div class="row h-100">
-      <div class="col-12 my-auto">
-        <div class="card cover-card offset-sm-2 offset-md-4 offset-lg-7">
-          <h1 class="cover-heading">Task Manager</h1>
-          <p class="cover-text">A task manager application by Team <i>Insert team name here (or revise this home screen as you see fit)</i></p>
-          <p>
-            <a href='{% url 'sign_up' %}' class="btn btn-lg btn-secondary">
-              Sign up
-            </a>
-          </p>
-          <p>
-            <a href='{% url 'log_in' %}' class="btn btn-lg btn-secondary">
-              Log in
-            </a>
-          </p>
+
+
+<div class="home-container d-flex flex-column">
+
+  <div class="top-left-logo">
+    <img src="{% static 'img/kcl_logo_red.png' %}" alt="KCL Red Logo" class="top-left-logo-img">
+  </div>
+
+
+  <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+    <div class="home-card text-center">
+      <div class="logo-wrapper mb-3">
+        <img src="{% static 'img/kcl_coat_of_arms.png' %}" alt="KCL coat of arms" class="kcl-logo">
+      </div>
+      <h1 class="home-heading mb-1">King's College London</h1>
+      <h2 class="home-subheading mb-4">Student Query System</h2>
+      <p>
+        <a href="{% url 'sign_up' %}" class="btn btn-light me-3 px-4 py-2">Sign up</a>
+        <a href="{% url 'log_in' %}" class="btn btn-light px-4 py-2">Log in</a>
+      </p>
+    </div>
+  </div>
+
+
+
+  <footer class="footer-links text-white">
+    <div class="container py-3">
+      <div class="row">
+        
+        <div class="col-sm-7 d-flex flex-wrap align-items-center">
+          <a href="#" class="text-white me-3 mb-2" target="_blank">Terms &amp; conditions</a>
+          <a href="#" class="text-white me-3 mb-2" target="_blank">Privacy policy</a>
+          <a href="#" class="text-white me-3 mb-2" target="_blank">Modern Slavery Act Transparency Statement</a>
+          <a href="#" class="text-white me-3 mb-2" target="_blank">Site help</a>
+          <a href="#" class="text-white me-3 mb-2" target="_blank">Accessibility</a>
+          <a href="#" class="text-white me-3 mb-2" target="_blank">Sitemap</a>
+          <a href="#" class="text-white mb-2" target="_blank">Cookies</a>
+        </div>
+        
+        <div class="col-sm-5 text-sm-end mt-3 mt-sm-0">
+          <h5 class="mb-2">Contact us</h5>
+          <p class="mb-1">wukonghelpdesk@gmail.com</p>
+          <p class="mb-0">Lab6.02, Bush House, London, WC2B 4BG, United Kingdom</p>
         </div>
       </div>
     </div>
-  </div>
+  </footer>
+
+</div>
 {% endblock %}
