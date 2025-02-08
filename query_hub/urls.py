@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from tickets import views
+from tickets.views import role_based_login_view
 
 
 
@@ -34,6 +35,10 @@ urlpatterns = [
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
     path('tickets/', views.TicketListView.as_view(), name='ticket_list'),
     path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
-    path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail')
+    path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
+    path('login_students/', role_based_login_view, {'role': 'students'}, name='student_login'),
+    path('login_program_officers/', role_based_login_view, {'role': 'program_officers'}, name='program_officer_login'),
+    path('login_specialists/', role_based_login_view, {'role': 'specialists'}, name='specialist_login'),
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
@@ -11,9 +11,10 @@ from django.views.generic import ListView
 from django.views.generic.edit import FormView, UpdateView, CreateView
 from django.views.generic.detail import DetailView
 from django.urls import reverse
-from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm,TicketForm, TicketAttachmentForm
+from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm,TicketForm, TicketAttachmentForm, CustomLoginForm
 from tickets.helpers import login_prohibited
 from tickets.models import Ticket, TicketActivity, TicketAttachment, User
+from django.http import HttpResponseForbidden
 
 @login_required
 def dashboard(request):
@@ -199,4 +200,42 @@ class TicketDetailView(DetailView):
     template_name = 'tickets/ticket_detail.html'
     context_object_name = 'ticket'
 
+def role_based_login_view(request, role):
+    if request.method == 'POST':
+        form = CustomLoginForm(data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
 
+            if user is not None and user.role == role:
+                login(request, user)
+                messages.success(request, f"welcome, {user.get_full_name()}！")
+                return redirect('dashboard')
+            else:
+                messages.error(request, "Incorrect infomation.")
+    else:
+        form = CustomLoginForm()
+
+    if role == 'students':
+        template = 'tickets/student_login.html'
+    elif role == 'program_officers':
+        template = 'tickets/program_officer_login.html'
+    elif role == 'specialists':
+        template = 'tickets/specialist_login.html'
+    else:
+        messages.error(request, "Invalid login role.")
+        return redirect('home')
+    return render(request, template, {'form': form, 'role': role})
+
+@login_required
+def student_dashboard_view(request):
+    return render(request, 'tickets/student_dashboard.html')
+
+@login_required
+def program_officer_dashboard_view(request):
+    return render(request, 'tickets/program_officer_dashboard.html')
+
+@login_required
+def specialist_dashboard_view(request):
+    return render(request, 'tickets/specialist_dashboard.html')

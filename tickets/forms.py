@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
 from .models import User, Ticket, TicketAttachment
-
+from django.contrib.auth.forms import AuthenticationForm
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -140,4 +140,5 @@ class TicketAttachmentForm(forms.ModelForm):
         model = TicketAttachment
         fields = ['file']
 
-
+class CustomLoginForm(AuthenticationForm):
+    pass
