@@ -6,18 +6,23 @@
 
 <div class="home-container d-flex flex-column">
 
+  <!-- Top-left logo -->
   <div class="top-left-logo">
     <img src="{% static 'img/kcl_logo_red.png' %}" alt="KCL Red Logo" class="top-left-logo-img">
   </div>
 
 
+  <!-- Main content area -->
   <div class="flex-grow-1 d-flex align-items-center justify-content-center">
     <div class="home-card text-center">
+      <!-- University logo -->
       <div class="logo-wrapper mb-3">
         <img src="{% static 'img/kcl_coat_of_arms.png' %}" alt="KCL coat of arms" class="kcl-logo">
       </div>
+      <!-- Heading and subheading -->
       <h1 class="home-heading mb-1">King's College London</h1>
       <h2 class="home-subheading mb-4">Student Query System</h2>
+      <!-- Signup and login buttons -->
       <p>
         <a href="{% url 'sign_up' %}" class="btn btn-light me-3 px-4 py-2">Sign up</a>
         <a href="{% url 'log_in' %}" class="btn btn-light px-4 py-2">Log in</a>
@@ -26,11 +31,12 @@
   </div>
 
 
-
+  <!-- Footer section with links and contact info -->
   <footer class="footer-links text-white">
     <div class="container py-3">
       <div class="row">
-        
+
+        <!-- Legal and support links -->
         <div class="col-sm-7 d-flex flex-wrap align-items-center">
           <a href="#" class="text-white me-3 mb-2" target="_blank">Terms &amp; conditions</a>
           <a href="#" class="text-white me-3 mb-2" target="_blank">Privacy policy</a>
@@ -41,6 +47,7 @@
           <a href="#" class="text-white mb-2" target="_blank">Cookies</a>
         </div>
         
+        <!-- Contact information -->
         <div class="col-sm-5 text-sm-end mt-3 mt-sm-0">
           <h5 class="mb-2">Contact us</h5>
           <p class="mb-1">wukonghelpdesk@gmail.com</p>
