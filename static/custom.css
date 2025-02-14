@@ -168,24 +168,30 @@ html, body {
   height: 100%;
 }
 
-/* 1) 容器：占满一屏；使用 background.png 做背景 */
 .page1-container {
-  /* 占满浏览器视口高度 */
   width: 100%;
   height: 100vh;
-  
-  /* 使用背景图填充，中心对齐，cover 保持宽高比铺满 */
-  background: url("../landing_page_1/background.png") no-repeat center/cover;
-  
-  /* 如果要做淡灰雾蒙蒙效果，可在图片本身做处理，或用叠加层 */
-  position: relative;
-  overflow: hidden;
+  background-image: url("/static/landing_page_1/background.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  border: 5px solid red; /* debug可见 */
 }
+
+
+/*.page1-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.3); 
+  z-index: 1;
+} */
 
 /* 2) 箭头 + “Scroll Down”文案这一组，居中摆放 */
 .arrows-text {
   /* 绝对定位，使其可以放在容器中心 */
-  position: absolute;
+  position: relative;
+  z-index: 2;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);

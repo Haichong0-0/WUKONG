@@ -26,7 +26,7 @@ from django.shortcuts import render
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home, name='home'),
+    path('', lambda request: render(request, 'page1.html'), name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('log_in/', views.LogInView.as_view(), name='log_in'),
     path('log_out/', views.log_out, name='log_out'),
@@ -37,6 +37,6 @@ urlpatterns = [
     path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
     path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     path('close_ticket/<uuid:ticket_id>/', views.close_ticket, name='close_ticket'),
-    path('page1/', lambda request: render(request, 'page1.html')),
+    path('page1/', lambda request: render(request, 'page1.html'), name='page1'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

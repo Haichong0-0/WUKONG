@@ -1,25 +1,11 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Landing Page 1</title>
-  <!-- 使用 Django static -->
-  <link rel="stylesheet" href="{% static 'landing_page_1/page1.css' %}">
-</head>
-<body>
+
+{% block body %}
   <div class="page1-container">
-    <div class="arrows-text">
-      <img class="arrow arrow-left"
-           src="{% static 'landing_page_1/Vector 1.svg' %}"
-           alt="Left Arrow">
-      <span>Scroll Down</span>
-      <img class="arrow arrow-right"
-           src="{% static 'landing_page_1/Vector 2.svg' %}"
-           alt="Right Arrow">
-    </div>
+    <h1 style="color:white; text-align:center; padding-top:100px;">Page1 from custom.css</h1>
   </div>
-</body>
-</html>
+{% endblock %}
+
 
 
