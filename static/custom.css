@@ -157,3 +157,65 @@ h3.profile-title {
 .table-striped tbody tr:nth-of-type(odd) {
   background-color: #f2faff;
 }
+
+
+/* ========== Landing Animation Section ========== */
+
+/* 页面整体滚动时，如果需要产生过渡效果，可以确保body/html有足够高度 */
+html, body {
+  /* 这里先不修改已有的设置，若需要可再调整 */
+  /* height: 200vh; 仅做示例演示，如果你已有类似的全屏设置，请注意不要冲突 */
+}
+
+/* 大容器：占满一屏，用于放置第八图、第九图，以及中间切片/背景等 */
+.animation-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden; /* 超出容器的内容可决定是否隐藏 */
+  background-color: #f0f0f0; /* 也可以换成图片背景或者渐变等 */
+}
+
+/* 放置中间的背景或切片 */
+.bg-slices {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  /* 你可以在landing_animation.html里放多个<div>来叠加不同切片 */
+  z-index: 1;
+}
+
+/* 第八张图：初始可见 */
+.image-eighth {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 400px; /* 根据需要调整大小 */
+  transition: opacity 1s ease; /* 淡入淡出，可调节时间或曲线 */
+}
+
+/* 第九张图：初始隐藏 */
+.image-ninth {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 400px;
+  opacity: 0; /* 隐藏 */
+  transition: opacity 1s ease;
+}
+
+/* 当要显示第九张图时，加个 visible 类 */
+.image-ninth.visible {
+  opacity: 1;
+}
+
+/* 当要隐藏第八张图时，加个 hidden 类 */
+.image-eighth.hidden {
+  opacity: 0;
+}
