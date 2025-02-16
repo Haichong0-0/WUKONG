@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from tickets.models import Department, Ticket, TicketActivity, User
 
+# add merge request
 
 class DashboardViewTestCase(TestCase):
     """Tests for the dashboard view."""
