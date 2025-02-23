@@ -141,18 +141,21 @@ class TicketAttachmentForm(forms.ModelForm):
         model = TicketAttachment
         fields = ['file']
 
-# The ReturnTicketForm form is used to create a form for returning a ticket.
-class ReturnTicketForm(forms.Form):
+class ReturnTicketForm(forms.ModelForm):
     return_reason = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter reason for returning'}),
-        label="Reason for Returning",
-        required=True
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}),
+        required=True,
     )
 
-# The SupplementTicketForm form is used to create a form for supplementing a ticket.
+    class Meta:
+        model = Ticket
+        fields = ['return_reason'] 
+        
+
 class SupplementTicketForm(forms.Form):
     supplement_info = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter additional information'}),
-        label="Supplement Information",
-        required=True
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}),
+        required=True,
+        label="",
+        help_text=""
     )
