@@ -26,8 +26,28 @@ def dashboard(request):
             Q(ticket__creator=user) | Q(ticket__assigned_user=user)
         ).order_by('-action_time')[:5]
     }
-    return render(request, 'dashboard.html', context)
 
+    if user.role == 'students':
+        return redirect('student_dashboard')
+    elif user.role == 'program_officers':
+        return redirect('program_officer_dashboard')
+    elif user.role == 'specialists':
+        return redirect('specialist_dashboard')
+
+    messages.error(request, "Your role is not recognized.")
+    return redirect('log_in') 
+
+@login_required
+def student_dashboard_view(request):
+    return render(request, 'students_dashboard.html', {'role': 'students'})
+
+@login_required
+def program_officer_dashboard_view(request):
+    return render(request, 'program_officer_dashboard.html', {'role': 'program_officers'})
+
+@login_required
+def specialist_dashboard_view(request):
+    return render(request, 'specialist_dashboard.html', {'role': 'specialists'})
 
 
 @login_prohibited
@@ -64,42 +84,40 @@ class LoginProhibitedMixin:
             return self.redirect_when_logged_in_url
 
 
-class LogInView(LoginProhibitedMixin, View):
+
+class LogInView(View):
     """Display login screen and handle user login."""
 
     http_method_names = ['get', 'post']
-    redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
     def get(self, request):
         """Display log in template."""
-
-        self.next = request.GET.get('next') or ''
-        return self.render()
+        return render(request, 'log_in.html', {'form': LogInForm(), 'next': request.GET.get('next', '')})
 
     def post(self, request):
         """Handle log in attempt."""
-
         form = LogInForm(request.POST)
-        self.next = request.POST.get('next') or settings.REDIRECT_URL_WHEN_LOGGED_IN
-        user = form.get_user()
-        if user is not None:
-            login(request, user)
-            return redirect(self.next)
-        messages.add_message(request, messages.ERROR, "The credentials provided were invalid!")
-        return self.render()
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
 
-    def render(self):
-        """Render log in template with blank log in form."""
+            if user is not None:
+                login(request, user)
+                messages.success(request, f"Welcome, {user.get_full_name()}!")
 
-        form = LogInForm()
-        return render(self.request, 'log_in.html', {'form': form, 'next': self.next})
+                return redirect('dashboard')
+            
+            messages.error(request,"Invalid username or password.")
+
+        return render(request, 'log_in.html', {'form': form})
 
 
 def log_out(request):
     """Log out the current user"""
 
     logout(request)
-    return redirect('home')
+    return redirect('log_in')
 
 
 class PasswordView(LoginRequiredMixin, FormView):
@@ -144,7 +162,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         """Return redirect URL after successful update."""
         messages.add_message(self.request, messages.SUCCESS, "Profile updated!")
-        return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+        return reverse('dashboard')
 
 
 class SignUpView(LoginProhibitedMixin, FormView):
@@ -199,43 +217,3 @@ class TicketDetailView(DetailView):
     model = Ticket
     template_name = 'tickets/ticket_detail.html'
     context_object_name = 'ticket'
-
-def role_based_login_view(request, role):
-    if request.method == 'POST':
-        form = CustomLoginForm(data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-
-            if user is not None and user.role == role:
-                login(request, user)
-                messages.success(request, f"welcome, {user.get_full_name()}！")
-                return redirect('dashboard')
-            else:
-                messages.error(request, "Incorrect infomation.")
-    else:
-        form = CustomLoginForm()
-
-    if role == 'students':
-        template = 'tickets/student_login.html'
-    elif role == 'program_officers':
-        template = 'tickets/program_officer_login.html'
-    elif role == 'specialists':
-        template = 'tickets/specialist_login.html'
-    else:
-        messages.error(request, "Invalid login role.")
-        return redirect('home')
-    return render(request, template, {'form': form, 'role': role})
-
-@login_required
-def student_dashboard_view(request):
-    return render(request, 'tickets/student_dashboard.html')
-
-@login_required
-def program_officer_dashboard_view(request):
-    return render(request, 'tickets/program_officer_dashboard.html')
-
-@login_required
-def specialist_dashboard_view(request):
-    return render(request, 'tickets/specialist_dashboard.html')
