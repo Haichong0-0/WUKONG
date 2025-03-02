@@ -784,3 +784,5 @@ def ticket_detail(request, ticket_id):
         'ticket': ticket,
         'activities': formatted_activities,
     })
+
+
