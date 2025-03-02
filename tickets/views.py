@@ -23,7 +23,7 @@ from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
 from .ai_service import classify_department, generate_ai_answer
-from .models import Ticket, TicketActivity
+from .models import *
 
 
 @login_required
@@ -750,3 +750,4 @@ def ticket_detail(request, ticket_id):
         'ticket': ticket,
         'activities': formatted_activities,
     })
+
