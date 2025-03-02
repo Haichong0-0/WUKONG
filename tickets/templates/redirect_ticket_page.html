@@ -15,7 +15,6 @@
                     <td><strong>Title:</strong></td>
                     <td>{{ ticket.title }}</td>
                 </tr>
-
                 <tr class="table-info">
                     <td><strong>Status:</strong></td>
                     <td id="ticket-status">{{ ticket.get_status_display }}</td>
@@ -37,9 +36,19 @@
                     <td id="assigned-user">{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
                 </tr>
                 <tr>
-                    <td><strong>Discription:</strong></td>
+                    <td><strong>Description:</strong></td>
                     <td>{{ ticket.description }}</td>
                 </tr>
+                {% if ticket.ai_processing %}
+                <tr class="table-info">
+                    <td><strong>AI-Generated Response:</strong></td>
+                    <td>{{ ticket.ai_processing.ai_generated_response }}</td>
+                </tr>
+                <tr>
+                    <td><strong>AI-Assigned Department:</strong></td>
+                    <td>{{ ticket.ai_processing.get_ai_assigned_department_display }}</td>
+                </tr>
+                {% endif %}
             </table>
         </div>
     </div>
@@ -86,6 +95,40 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        sortTable();
+    });
+    
+    function sortTable() {
+        var table = document.getElementById('specialists-table').getElementsByTagName('tbody')[0];
+        var rows = Array.from(table.rows);
+
+        var container = document.querySelector('.container');
+        var recDepartmentId = container.getAttribute('data-rec-department');//'study_abroad';
+
+        console.log('AI Assigned Department:', recDepartmentId); // Access the value here
+
+        rows.sort(function(a, b) {
+            var deptA = a.cells[2].innerText.toLowerCase();
+            var deptB = b.cells[2].innerText.toLowerCase();
+            var countA = parseInt(a.cells[1].innerText);
+            var countB = parseInt(b.cells[1].innerText);
+
+            if (a.getAttribute('data-department-name') === recDepartmentId && b.getAttribute('data-department-name') !== recDepartmentId) return -1;
+            if (a.getAttribute('data-department-name') !== recDepartmentId && b.getAttribute('data-department-name') === recDepartmentId) return 1;
+
+            if (deptA < deptB) return -1;
+            if (deptA > deptB) return 1;
+            if (countA < countB) return -1;
+            if (countA > countB) return 1;
+            return 0;
+        });
+
+        rows.forEach(function(row) {
+            table.appendChild(row);
+        });
+    }
+
     document.addEventListener('submit', function(event) {
         const form = event.target.closest('.redirect-ticket-form');
         if (form) {
@@ -128,6 +171,7 @@
                             </td>
                         `;
                     });
+                    sortTable();
                 }
             })
             .catch(error => console.error('Error:', error));
