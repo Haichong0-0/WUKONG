@@ -1,0 +1,15 @@
+[
+    {
+        "model": "tickets.user",
+        "pk": 5,
+        "fields": {
+            "username": "@admin",
+            "email": "admin@example.com",
+            "is_staff": true,
+            "is_superuser": true,
+            "is_active": true,
+            "role" : "others",
+            "password": "pbkdf2_sha256$870000$rbIT9DPOes2WJOIP4c6dZi$mHZlR9oV0zEltTlt1gKFlXVhHd7q99mS+26WZjvaPYw="
+        }
+    }
+]

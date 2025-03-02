@@ -1,0 +1,39 @@
+{% extends 'base_content.html' %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Ticket List-->
+  <h1>All Tickets</h1>
+  {% if tickets %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Submitted By</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in tickets %}
+        <tr>
+          <td>{{ ticket.title }}</td>
+          <td>{{ ticket.get_priority_display }}</td>
+          <td>{{ ticket.get_status_display }}</td>
+          <td>{{ ticket.creator.username }}</td>
+          <td>
+            <a href="{% url 'ticket_detail' pk=ticket.pk %}" class="btn btn-sm btn-primary">
+              View
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No tickets found.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block body %}
+  <div class="container vh-100">
+    <div class="row h-100">
+      <div class="col-12 my-auto">
+        <div class="card cover-card offset-sm-2 offset-md-4 offset-lg-7">
+          <h1 class="cover-heading">Task Manager</h1>
+          <p class="cover-text">A task manager application by Team <i>Insert team name here (or revise this home screen as you see fit)</i></p>
+          <p>
+            <a href='{% url 'sign_up' %}' class="btn btn-lg btn-secondary">
+              Sign up
+            </a>
+          </p>
+          <p>
+            <a href='{% url 'log_in' %}' class="btn btn-lg btn-secondary">
+              Log in
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

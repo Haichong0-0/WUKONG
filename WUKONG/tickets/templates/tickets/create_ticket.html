@@ -1,0 +1,23 @@
+{# tickets/templates/tickets/create_ticket.html #}
+{% extends 'base_content.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container">
+    <!-- Create a New Ticket -->
+  <h1>Create a New Ticket</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% include 'partials/bootstrap_form.html' with form=form %}
+    <div class="mb-3">
+      <label for="id_description" class="form-label">Description</label>
+      <textarea name="description" id="id_description" class="form-control" rows="3"></textarea>
+    <div class="mb-3">
+      <label for="id_file" class="form-label">Attachments (optional)</label>
+      <input type="file" name="file" id="id_file" class="form-control" multiple>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+{% endblock %}

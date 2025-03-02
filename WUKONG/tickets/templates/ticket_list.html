@@ -1,0 +1,6 @@
+<h1>All Tickets</h1>
+<ul>
+    {% for ticket in tickets %}
+        <li>{{ ticket.title }} - {{ ticket.status }} (Created on {{ ticket.created_at }})</li>
+    {% endfor %}
+</ul>

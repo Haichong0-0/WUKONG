@@ -1,0 +1,75 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home' %}">
+      <i class="bi bi-ticket-detailed"></i> TicketSystem
+    </a>
+
+    <button class="navbar-toggler" type="button"
+            data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'dashboard' %}">
+            <i class="bi bi-speedometer2 d-none d-md-inline"></i>
+            Dashboard
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#"
+             role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-folder2-open d-none d-md-inline"></i>
+            Tickets
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'ticket_list' %}">
+              <i class="bi bi-list-ul"></i> List View
+            </a></li>
+            <li><a class="dropdown-item" href="{% url 'create_ticket' %}">
+              <i class="bi bi-plus-square"></i> New Ticket
+            </a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center"
+               href="#" role="button" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle fs-5"></i>
+              <span class="d-none d-lg-inline ms-2">{{ user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
+              <li><a class="dropdown-item" href="{% url 'profile' %}">
+                <i class="bi bi-person-gear"></i> Profile Settings
+              </a>
+            </li>
+            
+            <!-- Add a link to the change password page -->
+            <li>
+              <a class="dropdown-item" href="{% url 'password' %}">
+                <i class="bi bi-key"></i> Change Password
+              </a>
+            </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="{% url 'log_out' %}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-light" href="{% url 'log_in' %}">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <span class="d-none d-sm-inline">Login</span>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

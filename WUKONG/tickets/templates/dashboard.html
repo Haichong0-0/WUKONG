@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Dashboard</h1>
+
+    {% if role == 'students' %}
+        <h2>Welcome, Student!</h2>
+        <p>Here you can view your tickets, check deadlines, and manage your academic queries.</p>
+        <a href="{% url 'create_ticket' %}" class="btn btn-primary">Create New Ticket</a>
+
+    {% elif role == 'program_officers' %}
+        <h2>Welcome, Program Officer!</h2>
+        <p>Manage student queries, assign tickets, and monitor progress.</p>
+        <a href="{% url 'ticket_list' %}" class="btn btn-primary">View All Tickets</a>
+
+    {% elif role == 'specialists' %}
+        <h2>Welcome, Specialist!</h2>
+        <p>Work on assigned tickets and provide expert support.</p>
+        <a href="{% url 'ticket_list' %}" class="btn btn-primary">View Assigned Tickets</a>
+
+    {% else %}
+        <h2>Welcome!</h2>
+        <p>Your role is not recognized. Please contact support.</p>
+    {% endif %}
+</div>
+{% endblock %}

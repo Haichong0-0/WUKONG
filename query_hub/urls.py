@@ -36,9 +36,6 @@ urlpatterns = [
     path('tickets/', views.TicketListView.as_view(), name='ticket_list'),
     path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
     path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
-    path('dashboard/students/', student_dashboard_view, name='student_dashboard'),
-    path('dashboard/program_officers/', program_officer_dashboard_view, name='program_officer_dashboard'),
-    path('dashboard/specialists/', specialist_dashboard_view, name='specialist_dashboard'),
-
+    path('dashboard/', dashboard, name='dashboard'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

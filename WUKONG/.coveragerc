@@ -1,0 +1,6 @@
+; Coverage configuration file
+; DO NOT CHANGE THIS FILE!
+
+[run]
+branch = True
+omit = *__init__.py,manage.py,*/migrations/*.py,*settings.py,*test*,admin.py,apps.py,seed.py,unseed.py

@@ -1,0 +1,14 @@
+asgiref
+coverage
+cssselect
+Django
+django-widget-tweaks
+django-with-asserts
+Faker
+libgravatar
+lxml
+python-dateutil
+pytz
+six
+sqlparse
+typing_extensions
