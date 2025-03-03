@@ -724,3 +724,23 @@ def ticket_detail(request, ticket_id):
         'ticket': ticket,
         'activities': formatted_activities,
     })
+
+@login_required
+def redirect_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+
+    if ai_assigned_department:
+        department = get_object_or_404(Department, name=ai_assigned_department)
+    else:
+        department = None
+        
+    specialists = User.objects.filter(role='specialists').annotate(ticket_count=Count('assigned_tickets'))
+
+    context = {
+        'ticket': ticket,
+        'rec_department': department,
+        'specialists': specialists,
+
+    }
+    return render(request, 'redirect_ticket_page.html', context)
