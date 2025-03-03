@@ -103,8 +103,8 @@
         var table = document.getElementById('specialists-table').getElementsByTagName('tbody')[0];
         var rows = Array.from(table.rows);
 
-        var container = document.querySelector('.container');
-        var recDepartmentId = container.getAttribute('data-rec-department');//'study_abroad';
+    
+        var recDepartmentId = "{{ rec_department }}";//'study_abroad';
 
         console.log('AI Assigned Department:', recDepartmentId); // Access the value here
 
