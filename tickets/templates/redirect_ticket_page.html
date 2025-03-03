@@ -1,7 +1,7 @@
 {% extends 'base_content.html' %}
 
 {% block content %}
-<div class="container my-4" data-rec-department="{{ ticket.ai_processing.get_ai_assigned_department_display }}">
+<div class="container my-4">
     <h1 class="text-center">Redirect Ticket - {{ ticket.title }}</h1>
     <div class="card mb-4 shadow-lg rounded">
         <div class="card-header bg-primary text-white">
@@ -89,8 +89,8 @@
         var table = document.getElementById('specialists-table').getElementsByTagName('tbody')[0];
         var rows = Array.from(table.rows);
 
-        var container = document.querySelector('.container');
-        var recDepartmentId = container.getAttribute('data-rec-department');//'study_abroad';
+    
+        var recDepartmentId = "{{ rec_department }}";//'study_abroad';
 
         console.log('AI Assigned Department:', recDepartmentId); // Access the value here
 
