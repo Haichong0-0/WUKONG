@@ -156,6 +156,8 @@
                     const specialistsTable = document.getElementById('specialists-table').getElementsByTagName('tbody')[0];
                     specialistsTable.innerHTML = ''; 
 
+                    console.log('AI Assigned Department:', recDepartmentId);
+
                     data.specialists.forEach(specialist => {
                         const row = specialistsTable.insertRow();
                         row.innerHTML = `
@@ -171,7 +173,6 @@
                             </td>
                         `;
                     });
-                    sortTable();
                 }
             })
             .catch(error => console.error('Error:', error));
