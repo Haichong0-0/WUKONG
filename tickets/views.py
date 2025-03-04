@@ -673,15 +673,20 @@ def respond_ticket(request, ticket_id):
 @login_required
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
-
+    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+    rec_department = get_object_or_404(Department, name=ai_assigned_department)
     # 查询所有专家，并统计每个专家已分配的工单数量
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
+    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+
+
 
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
-        'specialists': specialists,
+        'rec_department': rec_department,
+        'specialists': sorted_specialists,
     })
 
 
@@ -718,7 +723,7 @@ def redirect_ticket(request, ticket_id):
         specialists = User.objects.filter(role='specialists') \
         .annotate(ticket_count=Count('assigned_tickets')) \
         .order_by('ticket_count')
-
+        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
         specialists_info = [
             {
                 'id': specialist.id,
@@ -726,7 +731,7 @@ def redirect_ticket(request, ticket_id):
                 'ticket_count': specialist.ticket_count,
                 'department_name': specialist.department.name if specialist.department else 'N/A'
             }
-            for specialist in specialists
+            for specialist in sorted_specialists
         ]
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
@@ -750,23 +755,3 @@ def ticket_detail(request, ticket_id):
         'ticket': ticket,
         'activities': formatted_activities,
     })
-
-@login_required
-def redirect_ticket_page(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
-
-    if ai_assigned_department:
-        department = get_object_or_404(Department, name=ai_assigned_department)
-    else:
-        department = None
-        
-    specialists = User.objects.filter(role='specialists').annotate(ticket_count=Count('assigned_tickets'))
-
-    context = {
-        'ticket': ticket,
-        'rec_department': department,
-        'specialists': specialists,
-
-    }
-    return render(request, 'redirect_ticket_page.html', context)
