@@ -561,14 +561,18 @@ def redirect_ticket_page(request, ticket_id):
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
     
+    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+    rec_department = get_object_or_404(Department, name=ai_assigned_department)
+
     returned_specialist_list = []
     ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
     for activity in ticket_activity:
         returned_specialist_list.append(activity.action_by) 
     specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
+    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
-        'specialists': specialists,
+        'specialists': sorted_specialists,
     })
 
 
@@ -611,6 +615,10 @@ def redirect_ticket(request, ticket_id):
         for activity in ticket_activity:
             returned_specialist_list.append(activity.action_by) 
 
+        ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+        rec_department = get_object_or_404(Department, name=ai_assigned_department)
+        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+        
         specialists_info = [
             {
                 'id': specialist.id,
@@ -618,7 +626,7 @@ def redirect_ticket(request, ticket_id):
                 'ticket_count': specialist.ticket_count,
                 'department_name': specialist.department.name if specialist.department else 'N/A'
             }
-            for specialist in specialists if specialist not in returned_specialist_list
+            for specialist in sorted_specialists if specialist not in returned_specialist_list
         ]
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
@@ -697,74 +705,6 @@ def respond_ticket(request, ticket_id):
         'activities': formatted_activities,
     })
 
-
-
-@login_required
-def redirect_ticket_page(request, ticket_id):
-    ticket = Ticket.objects.get(id=ticket_id)
-    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
-    rec_department = get_object_or_404(Department, name=ai_assigned_department)
-    # 查询所有专家，并统计每个专家已分配的工单数量
-    specialists = User.objects.filter(role='specialists') \
-    .annotate(ticket_count=Count('assigned_tickets')) \
-    .order_by('ticket_count')
-    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
-
-
-
-    return render(request, 'redirect_ticket_page.html', {
-        'ticket': ticket,
-        'rec_department': rec_department,
-        'specialists': sorted_specialists,
-    })
-
-
-@login_required
-@require_POST
-def redirect_ticket(request, ticket_id):
-    if not request.user.is_program_officer():
-        return redirect('redirect_ticket_page', ticket_id=ticket_id)
-    ticket = Ticket.objects.get(id=ticket_id)
-    new_assignee_id = request.POST.get('new_assignee_id')
-    if new_assignee_id:
-        new_assignee = User.objects.get(id=new_assignee_id)
-        ticket.assigned_user = new_assignee
-        ticket.status = 'in_progress'  # 更新工单状态为进行中
-        ticket.latest_action = 'redirected'
-        ticket.save()
-
-        ticket_activity = TicketActivity(
-            ticket=ticket,
-            action='redirected',
-            action_by=request.user,
-            action_time=timezone.now(),
-            comment=f'Redirected to {new_assignee.full_name()}'
-        )
-        ticket_activity.save()
-
-        updated_ticket_info = {
-            'assigned_user': ticket.assigned_user.username if ticket.assigned_user else 'Unassigned',
-            'status': ticket.status,
-            'priority': ticket.priority,
-            'assigned_department': ticket.assigned_department,
-        }
-
-        specialists = User.objects.filter(role='specialists') \
-        .annotate(ticket_count=Count('assigned_tickets')) \
-        .order_by('ticket_count')
-        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
-        specialists_info = [
-            {
-                'id': specialist.id,
-                'full_name': specialist.full_name(),
-                'ticket_count': specialist.ticket_count,
-                'department_name': specialist.department.name if specialist.department else 'N/A'
-            }
-            for specialist in sorted_specialists
-        ]
-        return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
-
-    return redirect('redirect_ticket_page', ticket_id=ticket_id)
 
 @login_required
 def ticket_detail(request, ticket_id):
