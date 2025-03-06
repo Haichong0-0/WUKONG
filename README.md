@@ -1,7 +1,6 @@
 # WUKONG
 $ source venv/bin/activate  
-$ pip install -r requirements.txt
-$ pip install "moto<4.0.0"
+$ pip install -r requirements.txt    
 $ python manage.py migrate  
 $ python manage.py makemigrations  
 $ python3 manage.py seed  

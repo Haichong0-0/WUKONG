@@ -111,24 +111,14 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
         )
         return user
 
-# tickets/forms.py
-
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'description', 'priority']  
+        fields = ['title', 'description', 'priority']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
         }
-
-    def __init__(self, *args, user=None, **kwargs):
-
-        super().__init__(*args, **kwargs)
-        if user and user.is_student():
-
-            self.fields.pop('priority', None)
-
 
 
 class MultipleFileInput(forms.ClearableFileInput):

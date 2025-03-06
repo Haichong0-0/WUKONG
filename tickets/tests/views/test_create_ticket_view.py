@@ -8,18 +8,18 @@ from tickets.forms import TicketForm
 
 
 class CreateTicketViewTestCase(TestCase):
+    """Tests for the CreateTicketView."""
 
     fixtures = [
         'tickets/tests/fixtures/default_user.json',
     ]
 
     def setUp(self):
-        
+        """Set up test data for each test."""
         self.user = User.objects.get(username='@johndoe')
-        self.user.role = 'program_officers'
-        self.user.save()
-
         self.url = reverse('create_ticket')
+
+
         self.form_input = {
             'title': 'My Test Ticket',
             'description': 'Hello, I have an issue with my coursework.',
@@ -27,46 +27,14 @@ class CreateTicketViewTestCase(TestCase):
         }
 
     def test_create_ticket_url(self):
-
+        """Check that the URL name matches the correct path."""
         self.assertEqual(self.url, '/tickets/create/')
-        
-    def test_post_create_ticket_as_student(self):
-
-        self.user.role = 'students'
-        self.user.save()
-
-        self.client.login(username=self.user.username, password='Password123')
-
-
-        form_input_student = {
-            'title': 'Student Ticket',
-            'description': 'I am a student, I want medium priority!',
-            'priority': 'medium'
-        }
-        before_count = Ticket.objects.count()
-        response = self.client.post(self.url, form_input_student, follow=True)
-        after_count = Ticket.objects.count()
-        self.assertEqual(after_count, before_count + 1)
-
-        ticket = Ticket.objects.latest('created_at')
-        self.assertEqual(ticket.title, form_input_student['title'])
-        self.assertEqual(ticket.description, form_input_student['description'])
-
-
-        self.assertEqual(ticket.priority, 'low', "Student's ticket must be forced to low priority")
-
-        self.assertEqual(ticket.assigned_department, 'general_enquiry')
-        self.assertEqual(ticket.creator, self.user)
-
-        expected_redirect_url = reverse('ticket_detail', kwargs={'pk': ticket.pk})
-        self.assertRedirects(response, expected_redirect_url, status_code=302, target_status_code=200)
-
-        messages_list = list(response.context['messages'])
-        self.assertEqual(len(messages_list), 1)
-        self.assertEqual(messages_list[0].level, messages.SUCCESS)
 
     def test_redirect_if_not_logged_in(self):
-
+        """
+        If a user is not logged in, accessing the create ticket page
+        should redirect them to the login screen.
+        """
         response = self.client.get(self.url)
         login_url = reverse('log_in')
         self.assertRedirects(
@@ -77,7 +45,7 @@ class CreateTicketViewTestCase(TestCase):
         )
 
     def test_get_create_ticket_view_when_logged_in(self):
-
+        """Logged-in user should be able to see the create ticket form."""
         self.client.login(username=self.user.username, password='Password123')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -87,7 +55,10 @@ class CreateTicketViewTestCase(TestCase):
         self.assertFalse(form.is_bound)
 
     def test_post_create_ticket_valid_data(self):
-
+        """
+        Submitting valid data should create a new ticket,
+        and redirect to the ticket detail page.
+        """
         self.client.login(username=self.user.username, password='Password123')
         before_count = Ticket.objects.count()
 
@@ -98,7 +69,6 @@ class CreateTicketViewTestCase(TestCase):
         ticket = Ticket.objects.latest('created_at')
         self.assertEqual(ticket.title, self.form_input['title'])
         self.assertEqual(ticket.description, self.form_input['description'])
-
         self.assertEqual(ticket.priority, self.form_input['priority'])
 
         self.assertEqual(ticket.assigned_department, 'general_enquiry')
@@ -108,11 +78,14 @@ class CreateTicketViewTestCase(TestCase):
         self.assertRedirects(response, expected_redirect_url, status_code=302, target_status_code=200)
 
         messages_list = list(response.context['messages'])
-        self.assertEqual(len(messages_list), 1)
+        self.assertEqual(len(messages_list), 1)  
         self.assertEqual(messages_list[0].level, messages.SUCCESS)
 
     def test_post_create_ticket_with_attachments(self):
-
+        """
+        If the user uploads one or more attachments,
+        they should be saved and linked to the newly created ticket.
+        """
         self.client.login(username=self.user.username, password='Password123')
 
         file1 = SimpleUploadedFile("test1.txt", b"file1 content", content_type='text/plain')
@@ -144,7 +117,10 @@ class CreateTicketViewTestCase(TestCase):
         self.assertEqual(messages_list[0].level, messages.SUCCESS)
 
     def test_post_create_ticket_invalid_data(self):
-
+        """
+        If the form data is invalid, stay on the same page
+        and do not create a new ticket.
+        """
         self.client.login(username=self.user.username, password='Password123')
 
         invalid_input = {
@@ -165,5 +141,3 @@ class CreateTicketViewTestCase(TestCase):
 
         messages_list = list(response.context['messages'])
         self.assertEqual(len(messages_list), 0)
-        
-    

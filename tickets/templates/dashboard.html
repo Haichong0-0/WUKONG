@@ -288,57 +288,6 @@
                         {% endif %}
                       </td>
                       <td>
-                        <form method="post" action="{% url 'return_ticket_page' ticket.id %}">
-                          {% csrf_token %}
-                          <button type="submit" name="return_ticket_page" class="btn btn-sm btn-danger">Return</button>
-                        </form>
-                        <br>
-                        <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
-                          {% csrf_token %}
-                          <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
-                        </form>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            {% endif %}
-            <h2>Responded Tickets</h2>
-            
-            {% if not responded_tickets %}
-              <div class="alert alert-info" role="alert">
-                No tickets found matching your criteria. Try a different filter or search term.
-              </div>
-            {% else %}
-              <table class="table table-bordered table-striped table-light">
-                <thead class="table-blue">
-                  <tr>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Answers</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for ticket in responded_tickets %}
-                    <tr>
-                      <td>{{ ticket.title }}</td>
-                      <td>{{ ticket.status }}</td>
-                      <td>{{ ticket.priority }}</td>
-                      <td>
-                        {% if ticket.answers %}
-                          Answered
-                        {% else %}
-                          Not yet answered
-                        {% endif %}
-                      </td>
-                      <td>
-                        <form method="post" action="{% url 'return_ticket_page' ticket.id %}">
-                          {% csrf_token %}
-                          <button type="submit" name="return_ticket_page" class="btn btn-sm btn-danger">Return</button>
-                        </form>
-                        <br>
                         <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>

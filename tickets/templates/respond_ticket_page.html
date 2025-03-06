@@ -4,7 +4,7 @@
 <div class="container my-4">
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">
-            <h1 class="text-center text-primary mb-4">Respond to Ticket</h1>
+            <h1 class="text-center text-primary mb-4">Respond to Ticket: {{ ticket.title }}</h1>
             <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-primary text-white">
                     <strong>Ticket Information</strong>
@@ -43,16 +43,19 @@
                 </div>
             </div>
 
-            <div class="card mb-4 rounded">  
-                <div id="response-success" class="alert alert-success rounded m-0" style="display: none;"></div>
-            </div>
-
             <div class="card mb-4 shadow-lg rounded">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
+                <div class="card-header bg-secondary text-white">
+                    <strong>Previous Responses</strong>
+                </div>
+                <div class="card-body">
+                    <pre id="previous-responses" class="text-muted">{{ ticket.answers|default:"No responses yet." }}</pre>
+                </div>
+            </div>
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-success text-white">
                     <strong>Activity Log</strong>
-                    <span id="activity-arrow">▼</span>
-                </div>                
-                <div class="card-body" id="activity-log" style="display: none;">
+                </div>
+                <div class="card-body" id="activity-log">
                     <ul class="timeline">
                         {% for activity in activities %}
                             <li class="timeline-item">
@@ -77,7 +80,7 @@
                 <div class="card-body">
                     <form id="respond-form" method="post">
                         {% csrf_token %}
-                        <textarea id="response-box" name="response_message" class="form-control" placeholder="Enter your response here..." required></textarea>
+                        <textarea name="response_message" class="form-control" placeholder="Enter your response here..." required></textarea>
                         <button type="submit" name="respond_ticket" class="btn btn-lg btn-primary mt-3 w-100">Respond</button>
                     </form>
                 </div>
@@ -89,87 +92,11 @@
 </div>
 
 <script>
-    function toggleSection(sectionId, arrowId) {
-        let section = document.getElementById(sectionId);
-        let arrow = document.getElementById(arrowId);
-
-        if (section.style.display === "none" || section.style.display === "") {
-            section.style.display = "block";
-            arrow.innerHTML = "▲"; 
-        } else {
-            section.style.display = "none";
-            arrow.innerHTML = "▼";
-        }
-    }
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const responseBox = document.getElementById("response-box");
-        const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}";
-        let aiPlaceholderActive = false;
-
-        responseBox.addEventListener("focus", function () {
-            if (!aiPlaceholderActive && responseBox.value.trim() === "") {
-                responseBox.value = aiResponse;
-                responseBox.style.fontStyle = "italic";
-                responseBox.style.color = "grey"; 
-                aiPlaceholderActive = true;
-                setTimeout(() => {
-                    responseBox.setSelectionRange(0, 0);
-                }, 0);
-            }
-        });
-
-        responseBox.addEventListener("keydown", function (event) {
-            if (aiPlaceholderActive) {
-                if (event.key !== "Enter") {
-                    // Clear the AI response once the user starts typing
-                    responseBox.value = ""; 
-                    responseBox.style.fontStyle = "normal"; 
-                    responseBox.style.color = "black"; 
-                    aiPlaceholderActive = false; 
-                }
-            }
-        });
-
-        // When pressing Enter, set the text to normal (confirm the input)
-        responseBox.addEventListener("keydown", function (event) {
-            if (aiPlaceholderActive && event.key === "Enter") {
-                event.preventDefault();
-                responseBox.style.fontStyle = "normal"; 
-                responseBox.style.color = "black"; 
-                aiPlaceholderActive = false; 
-            }
-        });
-
-        // Prevent the cursor from moving when AI text is active
-        responseBox.addEventListener("mousedown", function (event) {
-            if (aiPlaceholderActive) {
-                responseBox.setSelectionRange(0, 0);
-                event.preventDefault();
-            }
-        });
-
-        // If the textarea loses focus, clear AI response if not typed over
-        responseBox.addEventListener("blur", function () {
-            if (aiPlaceholderActive && responseBox.value.trim() === aiResponse) {
-                responseBox.value = "";
-                responseBox.style.fontStyle = "normal";
-                responseBox.style.color = "black";
-                aiPlaceholderActive = false;
-            }
-        });
-    });
-</script>
-
-<script>
     document.getElementById('respond-form').addEventListener('submit', function(event) {
         event.preventDefault();
 
         let form = this;
         let formData = new FormData(form);
-
         fetch("{% url 'respond_ticket' ticket.id %}", {
             method: 'POST',
             body: formData
@@ -177,15 +104,10 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                document.getElementById('response-box').value = '';
-
-                let notification = document.getElementById('response-success');
-                    notification.innerText = "Response submitted successfully!";
-                    notification.style.display = "block"; 
+                document.getElementById('previous-responses').innerText = data.answers;
 
                 let activityLog = document.getElementById('activity-log');
                 activityLog.innerHTML = '<ul class="timeline">';
-                
                 data.activities.forEach(activity => {
                     activityLog.innerHTML += `
                         <li class="timeline-item">
@@ -199,25 +121,12 @@
                     `;
                 });
                 activityLog.innerHTML += '</ul>';
-
-                // Show the updated activity log if it was hidden
-                activityLog.style.display = "block";
-                document.getElementById("activity-arrow").innerHTML = "▲";
             } else {
                 alert('Error: Could not submit response');
             }
         })
         .catch(error => console.error('Error:', error));
     });
-
 </script>
-
-<style>
-    #response-box {
-        min-height: 150px;
-        height: auto;
-        resize: vertical;
-    }
-</style>
 
 {% endblock %}
