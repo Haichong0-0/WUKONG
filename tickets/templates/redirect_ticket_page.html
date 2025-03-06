@@ -2,6 +2,8 @@
 
 {% block content %}
 <div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
     <h1 class="text-center">Redirect Ticket - {{ ticket.title }}</h1
     <div class="card mb-4 shadow-lg rounded">
         <div class="card-header bg-primary text-white">
@@ -50,83 +52,37 @@
             </table>
         </div>
     </div>
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8">
-            <div class="card mb-4 shadow-lg rounded">
-                <div class="card-header bg-primary text-white text-center">
-                    <strong>Specialists</strong>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered table-striped text-center" id="specialists-table">
-                        <thead class="table-primary">
-                            <tr>
-                                <th>Name</th>
-                                <th>Assigned Workload</th>
-                                <th>Department</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for specialist in specialists %}
-                            <tr>
-                                <td>{{ specialist.full_name }}</td>
-                                <td>{{ specialist.ticket_count }}</td>
-                                <td>{{ specialist.department.name }}</td>
-                                <td>
-                                    <form method="post" action="{% url 'redirect_ticket' ticket.id %}" class="redirect-ticket-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="new_assignee_id" value="{{ specialist.id }}">
-                                        <button type="submit" class="btn btn-sm btn-primary">Assign</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        
-            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
-        </div>
-    </div>
-    
+
+    <h4 class="mt-4">Specialists</h4>
+    <table class="table" id="specialists-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Assigned Workload</th>
+                <th>Department</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for specialist in specialists %}
+            <tr data-department-name="{{ specialist.department.name }}">
+                <td>{{ specialist.full_name }}</td>
+                <td>{{ specialist.ticket_count }}</td>
+                <td>{{ specialist.department.name }}</td>
+                <td>
+                    <form method="post" action="{% url 'redirect_ticket' ticket.id %}" class="redirect-ticket-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_assignee_id" value="{{ specialist.id }}">
+                        <button type="submit" class="btn btn-sm btn-primary">Assign</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        sortTable();
-    });
-    
-    function sortTable() {
-        var table = document.getElementById('specialists-table').getElementsByTagName('tbody')[0];
-        var rows = Array.from(table.rows);
-
-    
-        var recDepartmentId = "{{ rec_department }}";//'study_abroad';
-
-        console.log('AI Assigned Department:', recDepartmentId); // Access the value here
-
-        rows.sort(function(a, b) {
-            var deptA = a.cells[2].innerText.toLowerCase();
-            var deptB = b.cells[2].innerText.toLowerCase();
-            var countA = parseInt(a.cells[1].innerText);
-            var countB = parseInt(b.cells[1].innerText);
-
-            if (a.getAttribute('data-department-name') === recDepartmentId && b.getAttribute('data-department-name') !== recDepartmentId) return -1;
-            if (a.getAttribute('data-department-name') !== recDepartmentId && b.getAttribute('data-department-name') === recDepartmentId) return 1;
-
-            if (deptA < deptB) return -1;
-            if (deptA > deptB) return 1;
-            if (countA < countB) return -1;
-            if (countA > countB) return 1;
-            return 0;
-        });
-
-        rows.forEach(function(row) {
-            table.appendChild(row);
-        });
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
         sortTable();
     });

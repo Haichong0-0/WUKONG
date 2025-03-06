@@ -172,7 +172,7 @@ class Ticket(models.Model):
 
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='attachments/%Y/%m/%d/')
+    file = models.FileField(upload_to='attachments/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -208,12 +208,6 @@ class AITicketProcessing(models.Model):
         choices=Ticket.DEPARTMENT_CHOICES,
         default='general_enquiry',
         help_text="AI-suggested department classification."
-    )
-    ai_assigned_priority = models.CharField(
-        max_length=20,
-        choices=Ticket.PRIORITY_CHOICES,
-        default='low',
-        help_text="AI-suggested priority level."
     )
 
     def __str__(self):

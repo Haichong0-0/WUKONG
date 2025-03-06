@@ -9,7 +9,7 @@ from django.core.mail import get_connection, send_mail
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
 from tickets.models import Department, Ticket, User, AITicketProcessing
-from tickets.ai_service import ai_process_ticket, query_bedrock
+from tickets.ai_service import generate_ai_answer, classify_department, query_bedrock
 import boto3
 from botocore.exceptions import ClientError
 import json
@@ -161,6 +161,7 @@ class Command(BaseCommand):
 
         departments = list(Ticket.DEPARTMENT_CHOICES)
         new_tickets = []
+        new_ai_tickets = []
 
         while len(new_tickets) < self.TICKET_COUNT:
             student = random.choice(students)
@@ -193,21 +194,24 @@ class Command(BaseCommand):
         created_tickets = Ticket.objects.bulk_create(new_tickets)
         self.stdout.write(self.style.SUCCESS(f"Successfully created {len(created_tickets)} tickets."))
 
-        new_ai_tickets_count = 0
         for ticket in created_tickets:
-            ai_process_ticket(ticket)
-            new_ai_tickets_count += 1
-            print_ticket(ticket)
-        self.stdout.write(self.style.SUCCESS(f"Successfully answered {new_ai_tickets_count} tickets."))
+            ai_department = classify_department(ticket.description)
+            ai_answer = generate_ai_answer(ticket.description)
 
-def print_ticket(ticket):
-    print(f"Ticket Title: {ticket.title}")
-    print(f"Description: {ticket.description}")
-    print(f"===============================================================================")
-    print(f"AI Response: {ticket.ai_processing.ai_generated_response}")
-    print(f"AI Department: {ticket.ai_processing.ai_assigned_department}")
-    print(f"AI Priority: {ticket.ai_processing.ai_assigned_priority}")
-    print(f"===============================================================================")
+            ai_ticket = AITicketProcessing.objects.create(
+                ticket=ticket,
+                ai_generated_response=ai_answer,
+                ai_assigned_department=ai_department
+            )
+            new_ai_tickets.append(ai_ticket)
+            self.stdout.write(self.style.SUCCESS(f"Ticket title: {ticket.title}"))
+            self.stdout.write(self.style.SUCCESS(f"Description: {ticket.description}"))
+            self.stdout.write(self.style.SUCCESS(f"   "))
+            self.stdout.write(self.style.SUCCESS(f"AI Response: {ai_answer}"))
+            self.stdout.write(self.style.SUCCESS(f"==============================================================================="))
+            self.stdout.write(self.style.SUCCESS(f"==============================================================================="))
+            self.stdout.write(self.style.SUCCESS(f"   "))
+        self.stdout.write(self.style.SUCCESS(f"Successfully answered {len(new_ai_tickets)} tickets."))
 
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
