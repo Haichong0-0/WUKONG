@@ -238,7 +238,11 @@
                         <br>
                         <br>
                         {% if ticket.status == 'open' %}
-                          <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
+                          <a href="{% url 'close_ticket' ticket.id %}" 
+                            class="btn btn-sm btn-danger"
+                            onclick="return confirmCloseTicket()">
+                            Close Ticket  
+                          </a>
                         {% endif %}
                       </td>
                     </tr>

@@ -14,3 +14,10 @@ class Command(BaseCommand):
         )
         count = stale_tickets.update(status='closed')
         self.stdout.write(self.style.SUCCESS(f'Successfully closed {count} stale tickets'))
+
+        urgent_tickets = Ticket.objects.filter(
+            status__in=['open', 'in_progress', 'resolved'],
+            updated_at__lt=now - timedelta(days=6)
+        )
+        ucount = urgent_tickets.update(priority='urgent')
+        self.stdout.write(self.style.SUCCESS(f'Successfully closed {ucount} stale tickets'))
