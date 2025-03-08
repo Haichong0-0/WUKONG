@@ -1,0 +1,178 @@
+{% extends 'base_content.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+    <h1 class="text-center">Current Ticket - {{ ticket.title }}</h1
+    <div class="card mb-4 shadow-lg rounded">
+        <div class="card mb-4 rounded">  
+            <div id="response-success" class="alert alert-success rounded m-0" style="display: none;"></div>
+        </div>
+        <div class="card-header bg-primary text-white">
+            <strong>Ticket Information</strong>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped" id="ticket-info">
+                <tr>
+                    <td><strong>Title:</strong></td>
+                    <td>{{ ticket.title }}</td>
+                </tr>
+
+                <tr class="table-info">
+                    <td><strong>Status:</strong></td>
+                    <td id="ticket-status">{{ ticket.get_status_display }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Priority:</strong></td>
+                    <td id="ticket-priority">{{ ticket.get_priority_display }}</td>
+                </tr>
+                <tr class="table-info">
+                    <td><strong>Assigned Department:</strong></td>
+                    <td>{{ ticket.get_assigned_department_display }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Created by:</strong></td>
+                    <td>{{ ticket.creator.username }} on {{ ticket.created_at }}</td>
+                </tr>
+                <tr class="table-info">
+                    <td><strong>Assigned to:</strong></td>
+                    <td id="assigned-user">{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
+                </tr>
+                <tr>
+                    <td><strong>Discription:</strong></td>
+                    <td>{{ ticket.description }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
+                    <strong>Activity Log</strong>
+                    <span id="activity-arrow">▼</span>
+                </div>                
+                <div class="card-body" id="activity-log" style="display: none;">
+                    <ul class="timeline">
+                        {% for activity in activities %}
+                            <li class="timeline-item">
+                                <div class="timeline-point bg-info"></div>
+                                <div class="timeline-content">
+                                    <h5><strong>{{ activity.username }}</strong> - {{ activity.action }}</h5>
+                                    <p><small class="text-muted">{{ activity.action_time }}</small></p>
+                                    <p>{{ activity.comment }}</p>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <p>No activities yet.</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-primary text-white text-center">
+                    <strong>Old Ansewers</strong>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-striped text-center" id="specialists-table">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Title</th>
+                                <th>Answers</th>
+                                <th>Merge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for other_ticket in tickets %}
+                            <tr>
+                                <td>{{ other_ticket.title }}</td>
+                                <td>{%for answer in other_ticket.answers%}
+                                    {{ answer }}
+                                    <br>
+                                    {% endfor %}
+                                </td>
+                                <td>                                    
+                                <form method="post" id="merge-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="used_ticket_id" value="{{ other_ticket.id }}">
+                                    <button type="submit" class="btn btn-sm btn-primary">Use This Answer</button>
+                                </form>
+
+
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        
+            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+    document.getElementById('merge-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        let form = this;
+        let formData = new FormData(form);
+
+        fetch("{% url 'merge_ticket' ticket.id %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+
+                let notification = document.getElementById('response-success');
+                    notification.innerText = "Submitted successfully!";
+                    notification.style.display = "block"; 
+
+                let activityLog = document.getElementById('activity-log');
+                activityLog.innerHTML = '<ul class="timeline">';
+                
+                data.activities.forEach(activity => {
+                    activityLog.innerHTML += `
+                        <li class="timeline-item">
+                            <div class="timeline-point bg-info"></div>
+                            <div class="timeline-content">
+                                <h5><strong>${activity.username}</strong> - ${activity.action}</h5>
+                                <p><small class="text-muted">${activity.action_time}</small></p>
+                                <p>${activity.comment}</p>
+                            </div>
+                        </li>
+                    `;
+                });
+                activityLog.innerHTML += '</ul>';
+
+                // Show the updated activity log if it was hidden
+                activityLog.style.display = "block";
+                document.getElementById("activity-arrow").innerHTML = "▲";
+            } else {
+                alert('Error: Could not submit response');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
+
+<script>
+    function toggleSection(sectionId, arrowId) {
+        let section = document.getElementById(sectionId);
+        let arrow = document.getElementById(arrowId);
+
+        if (section.style.display === "none" || section.style.display === "") {
+            section.style.display = "block";
+            arrow.innerHTML = "▲"; 
+        } else {
+            section.style.display = "none";
+            arrow.innerHTML = "▼";
+        }
+    }
+</script>
+{% endblock %}

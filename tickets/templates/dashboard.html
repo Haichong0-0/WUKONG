@@ -161,12 +161,17 @@
                         <form method="post" action="{% url 'redirect_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" class="btn btn-sm btn-warning">Redirect</button>
-                      </form> 
+                        </form> 
                         <br>
                         <!-- Respond to Ticket Form -->
                         <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
+                        </form>
+                        <br>
+                        <form method="post" action="{% url 'merge_ticket_page' ticket.id %}">
+                          {% csrf_token %}
+                          <button type="submit" name="merge_ticket_page" class="btn btn-sm btn-warning">Merge  </button>
                         </form>
                     </td>
                     </tr>
