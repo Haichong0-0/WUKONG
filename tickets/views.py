@@ -28,12 +28,14 @@ from django.utils.decorators import method_decorator
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
-
-    attachment = TicketAttachment(ticket=ticket)
     
+    attachment = TicketAttachment(ticket=ticket)
+      
     attachment.file.save(file_obj.name, file_obj, save=True)
-
+    
     attachment.save()
+        
+    
 
 @login_required
 def dashboard(request):
@@ -393,6 +395,12 @@ class TicketListView(ListView):
     model = Ticket
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_student():
+            messages.error(request, 'You do not have permission to view the ticket list.')
+            return redirect('dashboard')  
+        return super().dispatch(request, *args, **kwargs)
 
 class TicketsTableView(View):
     def get(self, request):
@@ -405,13 +413,21 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     template_name = 'tickets/create_ticket.html'
     success_url = '/tickets/'
 
-    def get_form_kwargs(self):
+    def dispatch(self, request, *args, **kwargs):
 
+        if request.user.is_authenticated and not request.user.is_student():
+            messages.error(request, 'Only students can create tickets.')
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # 关键：将 user 传给表单
+
+        kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = 'open'
@@ -420,34 +436,54 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             ticket.priority = 'low'
 
 
-        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
+        ticket.save()
+        
+
+
+        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').exclude(id=ticket.id).first()
+
         if existing_ticket:
-            existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
-                ticket.id, ticket.description)
+            
+            existing_ticket.description += (
+                f"\n\nMerged with ticket ID: {ticket.id}. "
+                f"New description: {ticket.description}"
+            )
             existing_ticket.save()
+
+
+            files = self.request.FILES.getlist('file')
+            for f in files:
+                handle_uploaded_file_in_chunks(existing_ticket, f)
+
+
             TicketActivity.objects.create(
                 ticket=existing_ticket,
                 action='merged',
                 action_by=self.request.user,
                 comment=f'Merged with ticket {ticket.id}'
             )
+
+
+            ticket.delete()
+
             messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
             return redirect('ticket_detail', pk=existing_ticket.pk)
+
         else:
-            ticket.save()
             files = self.request.FILES.getlist('file')
             for f in files:
                 handle_uploaded_file_in_chunks(ticket, f)
-                
+
             TicketActivity.objects.create(
                 ticket=ticket,
                 action='created',
                 action_by=self.request.user
             )
+
             ai_process_ticket(ticket)
+
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
-
 
 
 class TicketDetailView(DetailView):

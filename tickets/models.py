@@ -1,5 +1,5 @@
 import uuid
-
+import re
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
@@ -169,10 +169,21 @@ class Ticket(models.Model):
         if self.latest_action is None:  # If no action has yet been recorded, set a default action
             self.latest_action = 'created'
         super().save(*args, **kwargs)
+        
+def user_directory_path(instance, filename):
+
+
+    email = instance.ticket.creator.email
+
+    safe_email = re.sub(r'[^0-9a-zA-Z@\._-]+', '_', email)
+
+    date_str = instance.ticket.created_at.strftime('%Y-%m-%d')
+
+    return f"attachments/{safe_email}/{date_str}/{filename}"
 
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='attachments/%Y/%m/%d/')
+    file = models.FileField(upload_to=user_directory_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
