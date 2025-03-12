@@ -11,24 +11,49 @@
 
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav me-auto">
+
+
         <li class="nav-item">
           <a class="nav-link active" href="{% url 'dashboard' %}">
             <i class="bi bi-speedometer2 d-none d-md-inline"></i>
             Dashboard
           </a>
         </li>
+
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             <i class="bi bi-folder2-open d-none d-md-inline"></i>
             Tickets
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{% url 'ticket_list' %}">
-              <i class="bi bi-list-ul"></i> List View
-            </a></li>
-            <li><a class="dropdown-item" href="{% url 'create_ticket' %}">
-              <i class="bi bi-plus-square"></i> New Ticket
-            </a></li>
+
+
+            {% if user.is_authenticated and not user.is_student %}
+              <li>
+                <a class="dropdown-item" href="{% url 'ticket_list' %}">
+                  <i class="bi bi-list-ul"></i> List View
+                </a>
+              </li>
+            {% endif %}
+
+
+            {% if user.is_authenticated and user.is_student %}
+              <li>
+                <a class="dropdown-item" href="{% url 'create_ticket' %}">
+                  <i class="bi bi-plus-square"></i> New Ticket
+                </a>
+              </li>
+            {% endif %}
+
+
+            {% if not user.is_authenticated %}
+              <li>
+                <span class="dropdown-item disabled" style="opacity: 0.7;">
+                  Please log in to access tickets
+                </span>
+              </li>
+            {% endif %}
           </ul>
         </li>
       </ul>
@@ -42,21 +67,22 @@
               <span class="d-none d-lg-inline ms-2">{{ user.username }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
-              <li><a class="dropdown-item" href="{% url 'profile' %}">
-                <i class="bi bi-person-gear"></i> Profile Settings
-              </a>
-            </li>
-            
-            <!-- Add a link to the change password page -->
-            <li>
-              <a class="dropdown-item" href="{% url 'password' %}">
-                <i class="bi bi-key"></i> Change Password
-              </a>
-            </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'profile' %}">
+                  <i class="bi bi-person-gear"></i> Profile Settings
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'password' %}">
+                  <i class="bi bi-key"></i> Change Password
+                </a>
+              </li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="{% url 'log_out' %}">
-                <i class="bi bi-box-arrow-right"></i> Logout
-              </a></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{% url 'log_out' %}">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+              </li>
             </ul>
           </li>
         {% else %}

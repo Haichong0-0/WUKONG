@@ -22,7 +22,7 @@
                         <td>{{ ticket.get_priority_display }}</td>
                         <td>{{ ticket.get_status_display }}</td>
                         <td>
-                            {% if ticket.status == 'returned' %}
+                            {% if ticket.status == 'returned_student' %}
                                 <!-- show reason for return -->
                                 {{ ticket.return_reason }}
                             {% else %}
@@ -33,12 +33,12 @@
                         <td>
                             <a href="{% url 'ticket_detail' pk=ticket.pk %}" class="btn btn-sm btn-primary">View</a>
 
-                            {% if user.role == 'program_officers' and ticket.status == 'open' %}
+                            {% if user.role != 'student'  and ticket.status == 'open' %}
                                 <a href="{% url 'return_ticket' pk=ticket.pk %}"
                                    class="btn btn-sm btn-warning">Return</a>
                             {% endif %}
 
-                            {% if user.role == 'students' and ticket.status == 'returned' %}
+                            {% if user.role == 'students' and ticket.status == 'returned_student' %}
                                 <a href="{% url 'supplement_ticket' pk=ticket.pk %}" class="btn btn-sm btn-success">Supplement
                                     Info</a>
                             {% endif %}

@@ -43,6 +43,7 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
     path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
+
     path("ticket/submit/", views.submit_ticket, name="submit_ticket"),
     path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
     path('dashboard_program_officer/', views.dashboard, name='dashboard_program_officer'),
@@ -50,5 +51,11 @@ urlpatterns = [
     path('dashboard_specialist/', views.dashboard, name='dashboard_specialist'),
     path('get_user_role/', get_user_role, name='get_user_role'),
     path('manage_tickets_for_program_officer/<uuid:ticket_id>/', views.manage_tickets_for_program_officer, name="manage_tickets_for_program_officer"),
+
+    path('ticket/<uuid:ticket_id>/update_page/', views.update_ticket_page, name='update_ticket_page'),
+    path('ticket/<uuid:ticket_id>/update_ticket/', views.update_ticket, name='update_ticket'),
+    
+
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #pragma: no cover

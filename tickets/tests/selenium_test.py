@@ -18,34 +18,56 @@ class DjangoSeleniumTests(unittest.TestCase):
         driver = self.driver
         driver.get("http://127.0.0.1:8000/")
 
-        # Get the page title
+        # Check the page title
         new_title = driver.title
         print(f"New page title: {new_title}")
 
-        # Allow case-insensitive matching
+        # Ensure "WUKONG" is in the page title (case insensitive)
         self.assertIn("wukong", new_title.lower())
+
+        # Ensure LOG IN button exists
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.LINK_TEXT, "LOG IN"))
+        )
+        login_button = driver.find_element(By.LINK_TEXT, "LOG IN")
+        self.assertTrue(login_button.is_displayed(), "LOG IN button is missing")
 
     def test_css_loaded(self):
         """Test if CSS is loaded correctly"""
         driver = self.driver
         driver.get("http://127.0.0.1:8000/")
 
-        # Ensure the page contains custom CSS styles
+        # Ensure custom CSS is applied (check an element styled by custom.css)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "container-box"))
         )
         content_element = driver.find_element(By.CLASS_NAME, "container-box")
         self.assertTrue(content_element.is_displayed(), "CSS may not be applied correctly")
 
-        # Get the color of the LOG IN button (verify CSS styles)
-        login_button = driver.find_element(By.PARTIAL_LINK_TEXT, "LOG")
+        # Get and print the color of the LOG IN button (check CSS styles)
+        login_button = driver.find_element(By.LINK_TEXT, "LOG IN")
         color = login_button.value_of_css_property("color")
         print("LOG IN button color:", color)
 
-    def test_base_template_renders(self):
-        """Test if the base.html template renders correctly"""
+    def test_login_page_loads(self):
+        """Test if the Login page loads correctly"""
         driver = self.driver
-        driver.get("http://127.0.0.1:8000/")
+        driver.get("http://127.0.0.1:8000/log_in/")
+
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "login-btn"))
+        )
+
+        heading = driver.find_element(By.CLASS_NAME, "ticket-system")
+        self.assertTrue(heading.is_displayed(), "Login page heading missing")
+
+        print("✅ Login page loaded successfully!")
+
+
+    def test_base_template_renders(self):
+        """Test if base_login.html template renders correctly"""
+        driver = self.driver
+        driver.get("http://127.0.0.1:8000/log_in/")
 
         # Check if Bootstrap is loaded
         WebDriverWait(driver, 10).until(
@@ -54,12 +76,26 @@ class DjangoSeleniumTests(unittest.TestCase):
         bootstrap_css = driver.find_element(By.XPATH, "//link[contains(@href, 'bootstrap')]")
         self.assertTrue(bootstrap_css, "Bootstrap CSS is not loaded correctly")
 
-        # Check if jQuery is loaded
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//script[contains(@src, 'jquery')]"))
+    def test_login_button_redirects(self):
+        """Test if clicking LOG IN button redirects to the login page"""
+        driver = self.driver
+        driver.get("http://127.0.0.1:8000/")
+
+        # Click the LOG IN button
+        login_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.LINK_TEXT, "LOG IN"))
         )
-        jquery_script = driver.find_element(By.XPATH, "//script[contains(@src, 'jquery')]")
-        self.assertTrue(jquery_script, "jQuery is not loaded correctly")
+        login_button.click()
+
+        # Wait for the login page to load
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "username"))
+        )
+
+        # Verify the URL is correct
+        current_url = driver.current_url
+        print(f"Redirected to: {current_url}")
+        self.assertIn("log_in", current_url)
 
     @classmethod
     def tearDownClass(cls):
@@ -68,6 +104,3 @@ class DjangoSeleniumTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

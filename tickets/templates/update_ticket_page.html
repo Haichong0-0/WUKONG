@@ -1,0 +1,187 @@
+{% extends 'base_content.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <h1 class="text-center text-primary mb-4">Supplement Ticket</h1>
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-primary text-white">
+                    <strong>Ticket Information</strong>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-striped">
+                        <tr>
+                            <td><strong>Title:</strong></td>
+                            <td>{{ ticket.title }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Status:</strong></td>
+                            <td>{{ ticket.get_status_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Priority:</strong></td>
+                            <td>{{ ticket.get_priority_display }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Assigned Department:</strong></td>
+                            <td>{{ ticket.get_assigned_department_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Created by:</strong></td>
+                            <td>{{ ticket.creator.username }} on {{ ticket.created_at }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Assigned to:</strong></td>
+                            <td>{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Discription:</strong></td>
+                            <td>{{ ticket.description }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-danger text-white">
+                    <strong>Returned Reason</strong>
+                </div>
+                <div class="card-body">
+                    <pre id="previous-responses" class="text-muted">{{ ticket.return_reason|default:"No Reason yet." }}</pre>
+                </div>
+            </div>
+            <div class="card mb-4 rounded">  
+                <div id="response-success" class="alert alert-success rounded m-0" style="display: none;"></div>
+            </div>
+
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
+                    <strong>Activity Log</strong>
+                    <span id="activity-arrow">▼</span>
+                </div>                
+                <div class="card-body" id="activity-log" style="display: none;">
+                    <ul class="timeline">
+                        {% for activity in activities %}
+                            <li class="timeline-item">
+                                <div class="timeline-point bg-info"></div>
+                                <div class="timeline-content">
+                                    <h5><strong>{{ activity.username }}</strong> - {{ activity.action }}</h5>
+                                    <p><small class="text-muted">{{ activity.action_time }}</small></p>
+                                    <p>{{ activity.comment }}</p>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <p>No activities yet.</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-primary text-white">
+                    <strong>Submit Your Update</strong>
+                </div>
+                <div class="card-body">
+                    <form id="update-form" method="post" action = "{% url 'update_ticket' ticket.id %}">
+                        {% csrf_token %}
+                        <textarea id="update-box" name="update_message" class="form-control" placeholder="Enter your update for discription here..." required></textarea>
+                        <button type="submit" name="update_ticket" class="btn btn-lg btn-primary mt-3 w-100">Update</button>
+                    </form>
+                </div>
+            </div>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSection(sectionId, arrowId) {
+        let section = document.getElementById(sectionId);
+        let arrow = document.getElementById(arrowId);
+
+        if (section.style.display === "none" || section.style.display === "") {
+            section.style.display = "block";
+            arrow.innerHTML = "▲"; 
+        } else {
+            section.style.display = "none";
+            arrow.innerHTML = "▼";
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const responseBox = document.getElementById("update-box");
+
+        responseBox.addEventListener("focus", function () {
+            if (responseBox.value.trim() === "") {
+                responseBox.value = aiResponse;
+                responseBox.style.fontStyle = "italic";
+                responseBox.style.color = "grey"; 
+                setTimeout(() => {
+                    responseBox.setSelectionRange(0, 0);
+                }, 0);
+            }
+        });
+    });
+</script>
+
+{% comment %} <script>
+    document.getElementById('update-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        let form = this;
+        let formData = new FormData(form);
+
+        fetch("{% url 'update_ticket' ticket.id %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('update-box').value = '';
+
+                let notification = document.getElementById('update-success');
+                    notification.innerText = "update submitted successfully!";
+                    notification.style.display = "block"; 
+
+                let activityLog = document.getElementById('activity-log');
+                activityLog.innerHTML = '<ul class="timeline">';
+                
+                data.activities.forEach(activity => {
+                    activityLog.innerHTML += `
+                        <li class="timeline-item">
+                            <div class="timeline-point bg-info"></div>
+                            <div class="timeline-content">
+                                <h5><strong>${activity.username}</strong> - ${activity.action}</h5>
+                                <p><small class="text-muted">${activity.action_time}</small></p>
+                                <p>${activity.comment}</p>
+                            </div>
+                        </li>
+                    `;
+                });
+                activityLog.innerHTML += '</ul>';
+
+                // Show the updated activity log if it was hidden
+                activityLog.style.display = "block";
+                document.getElementById("activity-arrow").innerHTML = "▲";
+            } else {
+                alert('Error: Could not submit response');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+</script> {% endcomment %}
+
+<style>
+    #update-box {
+        min-height: 150px;
+        height: auto;
+        resize: vertical;
+    }
+</style>
+
+{% endblock %}

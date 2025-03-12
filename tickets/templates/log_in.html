@@ -1,18 +1,29 @@
-{% extends 'base_content.html' %}
+{% extends 'base_login.html' %}
 {% block page_title %}Login - WUKONG{% endblock %}
 {% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12 col-md-6 offset-md-3">
-      <h1>Log in</h1>
-      <form action="{% url 'log_in' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ next }}">
-        {% include 'partials/bootstrap_form.html' with form=form %}
-        <input type="submit" value="Log in" class="btn btn-primary">
-      </form>
+<div class="login-container">
+    <div class="login-box">
+        <h2 class="ticket-system">Ticket System</h2>
+        <div class="login-logo">
+          <img src="/static/images/login-logo.png" alt="WUKONG">
+        </div>
+        <h1 class="wukong-title">
+          <img src="/static/images/login-wukong.png" alt="">
+        </h1>
+        <form action="{% url 'log_in' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                {{ form.username }}
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="login-btn">Log in</button>
+        </form>
     </div>
-  </div>
 </div>
 
 <script>

@@ -25,20 +25,26 @@ from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
 from tickets.models import Ticket, TicketActivity, TicketAttachment, User, Response
 
 from .ai_service import ai_process_ticket
-from .models import Ticket, TicketActivity
+
+from .models import Ticket, TicketActivity, Department
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.http import JsonResponse
 
 
+from .models import Ticket, TicketActivity, Department
+
+
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
-
-    attachment = TicketAttachment(ticket=ticket)
     
+    attachment = TicketAttachment(ticket=ticket)
+      
     attachment.file.save(file_obj.name, file_obj, save=True)
-
+    
     attachment.save()
+        
+    
 
 
 
@@ -135,10 +141,26 @@ def dashboard(request):
         ticket_stats = User.objects.filter(role='specialists').annotate(
             ticket_count=Count('assigned_tickets')
         )
+        
+        returned_tickets = []
+        for ticket in tickets:
+            if ticket.status == 'returned_officer'or ticket.status == 'returned':
+                returned_tickets.append(ticket)
+        tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
 
+
+
+        updated_tickets = []
+        for ticket in tickets:
+            if ticket.latest_action == 'status_updated' and ticket.status == 'open':
+                updated_tickets.append(ticket)
+        tickets = [ticket for ticket in tickets if ticket not in updated_tickets]
         return render(request, 'dashboard_program_officer.html', {
+
             'user': current_user,
             'all_tickets': tickets,
+            'returned_ticket': returned_tickets,
+            'updated_tickets': updated_tickets,
             'ticket_stats': ticket_stats,
         })
 
@@ -147,7 +169,7 @@ def dashboard(request):
 
 
         tickets = Ticket.objects.filter(creator=current_user)
-
+        
 
         if search_query:
             tickets = tickets.filter(
@@ -166,9 +188,17 @@ def dashboard(request):
         elif sort_option == 'priority_desc':
             tickets = tickets.order_by(-priority_case)
 
+            
+        returned_tickets = []
+        for ticket in tickets:
+            if ticket.status == 'returned_student':
+                returned_tickets.append(ticket)
+        tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
         return render(request, 'dashboard_student.html', {
+
             'user': current_user,
             'student_tickets': tickets,
+            'returned_tickets': returned_tickets
         })
 
 
@@ -312,6 +342,7 @@ class LogInView(LoginProhibitedMixin, View):
         form = LogInForm()
         return render(self.request, 'log_in.html', {'form': form, 'next': self.next})
 
+
 def log_out(request):
     """Log out the current user"""
 
@@ -365,6 +396,12 @@ class TicketListView(ListView):
     model = Ticket
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_student():
+            messages.error(request, 'You do not have permission to view the ticket list.')
+            return redirect('dashboard')  
+        return super().dispatch(request, *args, **kwargs)
 
 class TicketsTableView(View):
     def get(self, request):
@@ -378,13 +415,21 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     template_name = 'tickets/create_ticket.html'
     success_url = '/tickets/'
 
-    def get_form_kwargs(self):
+    def dispatch(self, request, *args, **kwargs):
 
+        if request.user.is_authenticated and not request.user.is_student():
+            messages.error(request, 'Only students can create tickets.')
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # 关键：将 user 传给表单
+
+        kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = 'open'
@@ -393,34 +438,54 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             ticket.priority = 'low'
 
 
-        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
+        ticket.save()
+        
+
+
+        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').exclude(id=ticket.id).first()
+
         if existing_ticket:
-            existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
-                ticket.id, ticket.description)
+            
+            existing_ticket.description += (
+                f"\n\nMerged with ticket ID: {ticket.id}. "
+                f"New description: {ticket.description}"
+            )
             existing_ticket.save()
+
+
+            files = self.request.FILES.getlist('file')
+            for f in files:
+                handle_uploaded_file_in_chunks(existing_ticket, f)
+
+
             TicketActivity.objects.create(
                 ticket=existing_ticket,
                 action='merged',
                 action_by=self.request.user,
                 comment=f'Merged with ticket {ticket.id}'
             )
+
+
+            ticket.delete()
+
             messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
             return redirect('ticket_detail', pk=existing_ticket.pk)
+
         else:
-            ticket.save()
             files = self.request.FILES.getlist('file')
             for f in files:
                 handle_uploaded_file_in_chunks(ticket, f)
-                
+
             TicketActivity.objects.create(
                 ticket=ticket,
                 action='created',
                 action_by=self.request.user
             )
+
             ai_process_ticket(ticket)
+
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
-
 
 
 class TicketDetailView(DetailView):
@@ -499,22 +564,140 @@ def respond_ticket_page(request, ticket_id):
         'activities': formatted_activities,
     })
     
+
+    if request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+    
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    if request.method == "POST" and "response_message" in request.POST:
+        response_message = request.POST.get("response_message")
+        if ticket.answers:
+            ticket.answers += "\n"
+        else:
+            ticket.answers = ""
+        ticket.answers += f"Response by {request.user.username}: {response_message}"
+        
+        ticket.status = 'in_progress'
+        ticket.save()
+        ticket_activity = TicketActivity.objects.create(
+            ticket=ticket,
+            action='responded',
+            action_by=request.user,
+            comment=response_message
+        )
+        ticket_activity.save()
+        activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+        formatted_activities = [{
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        } for activity in activities]
+
+        return JsonResponse({
+            'success': True,
+            'activities': formatted_activities,
+            'answers': ticket.answers
+        })
+    return render(request, 'respond_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+    
+    
+@login_required
+def update_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator:
+        return redirect('dashboard')
+    
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'update_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+
+
+@login_required
+def update_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if request.user != ticket.creator:
+        messages.error(request, "You do not have permission to modify this ticket.")
+        return redirect('dashboard')
+    if request.method == "POST" and "update_message" in request.POST:
+        update_message = request.POST.get("response_message")
+        if not ticket.description:
+            ticket.description += "\n"
+        ticket.description += f"\n\nSupplement: {request.user.username}: {update_message}"
+        
+        ticket.status = 'open'
+        ticket.latest_action = 'status_updated'
+        ticket.save()
+        ticket_activity = TicketActivity.objects.create(
+            ticket=ticket,
+            action='status_updated',
+            action_by=request.user,
+            comment=update_message
+        )
+        ticket_activity.save()
+        return redirect('dashboard')
+        # activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+        # formatted_activities = [{
+        #     'username': activity.action_by.username,
+        #     'action': activity.get_action_display(),
+        #     'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+        #     'comment': activity.comment or "No comments."
+        # } for activity in activities]
+
+        # return JsonResponse({
+        #     'success': True,
+        #     'activities': formatted_activities,
+        #     'answers': ticket.answers
+        # })
+    return redirect('update_ticket_page', ticket_id=ticket_id)
+    
+
 @login_required
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
 
+    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+    rec_department = get_object_or_404(Department, name=ai_assigned_department)
+
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
+
+    
     
     returned_specialist_list = []
     ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
     for activity in ticket_activity:
         returned_specialist_list.append(activity.action_by) 
     specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
+
+    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
-        'specialists': specialists,
+        'specialists': sorted_specialists,
     })
 
 @login_required
@@ -549,12 +732,11 @@ def redirect_ticket(request, ticket_id):
 
         specialists = User.objects.filter(role='specialists') \
         .annotate(ticket_count=Count('assigned_tickets')) \
-        .order_by('ticket_count')
-        
-        returned_specialist_list = []
-        ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
-        for activity in ticket_activity:
-            returned_specialist_list.append(activity.action_by) 
+        .order_by('ticket_count') 
+
+        ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+        rec_department = get_object_or_404(Department, name=ai_assigned_department)
+        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
 
         specialists_info = [
             {
@@ -563,7 +745,7 @@ def redirect_ticket(request, ticket_id):
                 'ticket_count': specialist.ticket_count,
                 'department_name': specialist.department.name if specialist.department else 'N/A'
             }
-            for specialist in specialists if specialist not in returned_specialist_list
+            for specialist in sorted_specialists
         ]
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
@@ -713,9 +895,13 @@ def return_ticket_specailist(request, ticket_id):
 
     if request.method == 'POST' and 'return_reason' in request.POST:
         return_reason = request.POST.get('return_reason')
-        ticket.status = 'returned'
+        
         ticket.assigned_user = None
         ticket.return_reason = return_reason
+        if 'return_ticket_specailist' in request.POST:
+            ticket.status = 'returned_officer'
+        else:
+            ticket.status = 'returned_student'
         ticket_activity = TicketActivity(
             ticket=ticket,
             action='returned',
@@ -837,4 +1023,5 @@ def manage_tickets_for_program_officer(request, ticket_id):
             return redirect('ticket_detail', ticket_id=ticket.id)
     else:
         form = TicketForm(instance=ticket)
+
     return render(request, 'manage_tickets_for_program_officer.html', {'form': form, 'ticket': ticket})

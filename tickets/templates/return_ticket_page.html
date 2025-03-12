@@ -81,10 +81,13 @@
                     <form id="return-form" method="post" action="{% url 'return_ticket_specailist' ticket.id %}">
                         {% csrf_token %}
                         <textarea name="return_reason" class="form-control" placeholder="Enter your reason here..." required></textarea>
-                        <button type="submit" name="return_ticket_specailist" class="btn btn-lg btn-danger mt-3 w-100" >Return</button>
+                        {% if user.role == 'specialist' %}
+                            <button type="submit" name="return_ticket_specailist" class="btn btn-lg btn-danger mt-3 w-100" >Return to Program Officer</button>
+                        {% endif %}
+                        <button type="submit" name="return_ticket_to_student" class="btn btn-lg btn-danger mt-3 w-100" >Return to Student</button>
                     </form>
                 </div>
-            </div>
+            </div>    
 
             <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
         </div>

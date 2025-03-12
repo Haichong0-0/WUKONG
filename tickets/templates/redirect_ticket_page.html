@@ -40,6 +40,16 @@
                     <td><strong>Discription:</strong></td>
                     <td>{{ ticket.description }}</td>
                 </tr>
+                {% if ticket.ai_processing %}
+                <tr>
+                    <td><strong>AI-Generated Response:</strong></td>
+                    <td>{{ ticket.ai_processing.ai_generated_response }}</td>
+                </tr>
+                <tr>
+                    <td><strong>AI-Assigned Department:</strong></td>
+                    <td>{{ ticket.ai_processing.get_ai_assigned_department_display }}</td>
+                </tr>
+                {% endif %}
             </table>
         </div>
     </div>
