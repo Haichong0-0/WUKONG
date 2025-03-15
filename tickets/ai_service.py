@@ -1,12 +1,36 @@
-import os
 import json
+import os
+
 import boto3
 from botocore.exceptions import ClientError
-from tickets.models import Ticket, AITicketProcessing, MergedTicket
+from tickets.models import AITicketProcessing, MergedTicket, Ticket
 
+# Importing OS module to access environment variables
+# Importing JSON module for handling JSON data
+# Importing Boto3 to interact with AWS services
+# Handling AWS-specific client errors
+# Importing Django settings to access project settings
+ 
+
+"""
+SUMMARY:
+
+This script integrates AWS Bedrock's Meta Llama 3 70B model with a Django-based ticketing system. It performs the following tasks:
+
+1. **AWS Bedrock Client Initialization** - Establishes a connection to AWS Bedrock.
+
+2. **AI-Powered Ticket Classification & Processing** - Uses AI to classify ticket departments, predict priority levels, and generate responses.
+
+3. **AI-Driven Ticket Merging** - Identifies similar tickets for potential merging based on their descriptions.
+
+4. **Database Interaction** - Stores AI-generated insights in Django models for further processing.
+"""
+
+# Retrieve AWS credentials from environment variables
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
+# Initialize AWS Bedrock client with the specified region
 try:
     client = boto3.client("bedrock-runtime", region_name="eu-west-2")
     print("✅ AWS Bedrock client initialized successfully.")
@@ -17,7 +41,9 @@ model_id = "meta.llama3-70b-instruct-v1:0"
 
 def query_bedrock(prompt):
     """
+    
     Query AWS Bedrock's Meta Llama 3 70B Instruct model with a given prompt.
+    
     """
     formatted_prompt = f"""
     <|begin_of_text|><|start_header_id|>user<|end_header_id|>
@@ -47,6 +73,11 @@ def query_bedrock(prompt):
     return ""
 
 def classify_department(ticket_description):
+    """
+    
+    Classifies the given ticket description into a predefined department.
+    
+    """
     prompt = f"""
     Classify the following university student query into one of these departments: 
     {', '.join([d[0] for d in Ticket.DEPARTMENT_CHOICES])}.
@@ -57,6 +88,11 @@ def classify_department(ticket_description):
     return query_bedrock(prompt)
 
 def predict_priority(ticket_description):
+    """
+    
+    Predicts the priority level of a given student query.
+    
+    """
     prompt = f"""
     Predict the priority level for the following university student query: 
     {', '.join([d[0] for d in Ticket.PRIORITY_CHOICES])}.
@@ -67,12 +103,23 @@ def predict_priority(ticket_description):
     return query_bedrock(prompt)
 
 def generate_ai_answer(ticket_description):
+    """
+
+    Generates a short, AI-generated response to a student query.
+    
+    """
     prompt = f"You are a university program officer, reply the student's query in only two or three sentences, 60 words max. Please note down 3 things in your answer: 1. Output the response only. Do not include things like: Here is a concise response to the student's query, [Your Name], Dear, Sincerely,  or any reflection on the answer, etc. that are not related to the response itself. Just give the answer itself. 2. 60 words max. 3. Do not include any bold or italic formatting. Provide a concise answer for the following student query: '{ticket_description}'"
     return query_bedrock(prompt)
 
 def ai_process_ticket(ticket):
     """
+    
+    Processes a support ticket using AI to classify the department,
+    predict the priority, and generate an AI response.
+    """
+    """
     Classifies the department and generates an AI response for the ticket description.
+    
     """
     ai_department = classify_department(ticket.description)
     ai_answer = generate_ai_answer(ticket.description)
@@ -87,6 +134,10 @@ def ai_process_ticket(ticket):
     ticket.priority = AITicketProcessing.objects.get(ticket=ticket).ai_assigned_priority
 
 def find_potential_tickets_to_merge(ticket):
+    """
+    Identifies similar open tickets that could be merged based on AI evaluation.
+    
+    """
     """
     Find potential tickets that can be merged with the current ticket by evaluating
     their descriptions using the AI model.

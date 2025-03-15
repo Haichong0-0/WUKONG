@@ -12,14 +12,23 @@ This module defines several Django forms used for authentication, user managemen
 It includes:
 
 1. **LogInForm** - Handles user authentication via username and password.
+
 2. **UserForm** - Allows users to update their profile information.
+
 3. **PasswordForm** - Enables users to change their password.
+
 4. **PasswordForm** - Enables users to change their password after authentication.
+
 5. **SignUpForm** - Allows new users to sign up with necessary details and password validation.
+
 6. **TicketForm** - Facilitates ticket creation and editing, allowing students to submit requests.
+
 7. **MultipleFileInput & MultipleFileField** - Custom field and widget enabling multiple file uploads.
+
 8. **TicketAttachmentForm** - Handles file attachments for tickets.
+
 9. **ReturnTicketForm** - Allows users to provide reasons when returning a ticket.
+
 10. **SupplementTicketForm** - Enables users to supplement additional information to an existing ticket.
 Each form ensures data integrity, user validation, and proper interaction with the models.
 """
