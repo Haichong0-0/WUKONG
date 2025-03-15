@@ -7,13 +7,13 @@ from tickets.models import Ticket, AITicketProcessing, MergedTicket
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
-# handle exception
+# Initialize AWS Bedrock runtime client
 try:
     client = boto3.client("bedrock-runtime", region_name="eu-west-2")
     print("✅ AWS Bedrock client initialized successfully.")
 except Exception as e:
     raise RuntimeError(f"❌ Error initializing AWS Bedrock client: {e}")
-
+# Define the AI model ID for Meta Llama 3 70B Instruct
 model_id = "meta.llama3-70b-instruct-v1:0"
 
 def query_bedrock(prompt):
