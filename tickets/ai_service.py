@@ -7,6 +7,7 @@ from tickets.models import Ticket, AITicketProcessing, MergedTicket
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
+# handle exception
 try:
     client = boto3.client("bedrock-runtime", region_name="eu-west-2")
     print("✅ AWS Bedrock client initialized successfully.")
