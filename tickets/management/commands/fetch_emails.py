@@ -20,6 +20,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         try:
             # Connect to Gmail IMAP server
+            #1.
             mail = imaplib.IMAP4_SSL(settings.IMAP_HOST, settings.IMAP_PORT)
             mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             mail.select("inbox")  # Select the inbox
