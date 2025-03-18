@@ -45,26 +45,28 @@
         <div class="alert alert-info">No assigned tickets found.</div>
     {% else %}
         <div class="tickets-container">
-        <div class="tickets-header">
-            <div>Title</div>
-            <div>Status</div>
-            <div>Priority</div>
-            <div>Answers</div>
-            <div>Actions</div>
-        </div>
-        {% for ticket in assigned_tickets %}
-            <div class="ticket-row">
-            {% if ticket.status != 'closed' %}
-                <div>{{ ticket.title }}</div>
-                <div>{{ ticket.get_status_name }}</div>
-                <div>{{ ticket.get_priority_name }}</div>
-                <div>{% if ticket.answers %}Answered{% else %}Not yet answered{% endif %}</div>
-                <div>
-                <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">Manage</a>
-                </div>
-            {% endif %}
+            <div class="tickets-header">
+                <div>Title</div>
+                <div>Status</div>
+                <div>Priority</div>
+                <div>Answers</div>
+                <div>Actions</div>
             </div>
-        {% endfor %}
+        
+            {% for ticket in assigned_tickets %}
+                {% if ticket.status != 'closed' %}
+                    <div class="ticket-row">
+                        <div>{{ ticket.title }}</div>
+                        <div>{{ ticket.get_status_name }}</div>
+                        <div>{{ ticket.get_priority_name }}</div>
+                        <div>{% if ticket.answers %}Answered{% else %}Not yet answered{% endif %}</div>
+                        <div>
+                        <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">Manage</a>
+                        </div>
+                    </div>
+                {% endif %}
+                </div>
+            {% endfor %}
         </div>
     {% endif %}
     </div>
