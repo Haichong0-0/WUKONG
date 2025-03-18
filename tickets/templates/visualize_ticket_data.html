@@ -12,6 +12,7 @@
         <th>Department</th>
         <th>Closed by Inactivity</th>
         <th>Closed Manually</th>
+        <th>In Progress</th>
       </tr>
     </thead>
     <tbody>
@@ -21,6 +22,7 @@
           <td>{{ report.department }}</td>
           <td>{{ report.closed_by_inactivity }}</td>
           <td>{{ report.closed_manually }}</td>
+          <td>{{ report.in_progress }}</td>
         </tr>
       {% endfor %}
     </tbody>
