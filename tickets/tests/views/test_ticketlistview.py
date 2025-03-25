@@ -25,21 +25,21 @@ class TicketListViewTestCase(TestCase):
         self.ticket1 = Ticket.objects.create(
             title="Test Ticket 1",
             creator=self.student,
-            status="open",
+            status="in_progress",
             assigned_user=self.specialist,
             assigned_department=self.department.name,
         )
         self.ticket2 = Ticket.objects.create(
             title="Test Ticket 2",
             creator=self.student,
-            status="open",
+            status="in_progress",
             assigned_user=self.program_officer,
             assigned_department=self.department.name,
         )
         self.ticket3 = Ticket.objects.create(
             title="Test Ticket 3",
             creator=self.student2,
-            status="open",
+            status="in_progress",
             assigned_user=self.specialist,
             assigned_department=self.department.name,
         )

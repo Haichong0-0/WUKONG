@@ -185,6 +185,8 @@ class Ticket(models.Model):
     return_reason = models.TextField(
         blank=True, null=True
     )  # Reason for returning the ticket
+
+    #acces modofiers
     can_be_managed_by_program_officers = models.BooleanField(
         default=True,
         help_text="Whether the ticket can be managed by the current user.",
@@ -236,7 +238,7 @@ def user_directory_path(instance, filename):
 
     return f"attachments/{safe_email}/{date_str}/{filename}"
 
-
+#this is linked to amazon a3
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(
         Ticket, on_delete=models.CASCADE, related_name="attachments"
@@ -286,7 +288,8 @@ class Response(models.Model):
         responder_name = self.responder.full_name() if self.responder else "Unknown"
         return f"Response {self.id} to Ticket {self.ticket.id} by {responder_name}"
 
-
+#each ticket will have a ticket processing when created
+#this will be used to store the ai generated response
 class AITicketProcessing(models.Model):
     ticket = models.OneToOneField(
         Ticket, on_delete=models.CASCADE, related_name="ai_processing"
@@ -328,7 +331,7 @@ class MergedTicket(models.Model):
     def __str__(self):
         return f"Merged into Ticket {self.primary_ticket.id}"
 
-
+#data collesion and report
 class DailyTicketClosureReport(models.Model):
     date = models.DateField()
     department = models.CharField(max_length=50, choices=Ticket.DEPARTMENT_CHOICES)

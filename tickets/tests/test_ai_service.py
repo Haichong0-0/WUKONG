@@ -62,11 +62,8 @@ class AITicketProcessingTests(TestCase):
             ai_processing__ai_assigned_department=ai_assigned_department,
         ).exclude(id=self.ticket.id)
 
-        # Verify that the second ticket is fetched (same department)
         self.assertIn(self.ticket_2, potential_tickets)
-        # Verify that the third ticket is NOT fetched (different department)
         self.assertNotIn(self.ticket_3, potential_tickets)
-        # Ensure only one ticket is excluded (the current ticket)
 
     @patch("tickets.ai_service.query_bedrock")
     def test_predict_priority(self, mock_query_bedrock):
@@ -104,11 +101,9 @@ class AITicketProcessingTests(TestCase):
 
         similar_tickets = find_potential_tickets_to_merge(self.ticket)
 
-        # Verify that only the similar ticket is returned
         self.assertEqual(len(similar_tickets), 1)
         self.assertEqual(similar_tickets[0].id, self.ticket_2.id)
 
-        # Verify that a MergedTicket entry was created
         merged_ticket = MergedTicket.objects.get(primary_ticket=self.ticket)
         self.assertIn(self.ticket_2, merged_ticket.suggested_merged_tickets.all())
         self.assertNotIn(ticket_3, merged_ticket.suggested_merged_tickets.all())
@@ -185,7 +180,6 @@ class TicketMergingTests(TestCase):
 
     @patch("tickets.ai_service.query_bedrock")
     def test_compare_and_merge_tickets(self, mock_query_bedrock):
-        # Mock the response of query_bedrock to simulate the comparison
         mock_query_bedrock.side_effect = lambda prompt: "Yes" if "course registration" in prompt else "No"
 
         # Fetch open tickets in the same department and exclude the current ticket
@@ -199,7 +193,6 @@ class TicketMergingTests(TestCase):
 
         # Compare tickets
         for potential_ticket in potential_tickets:
-            # Generate the prompt for comparison
             prompt = f"""
             Determine whether the following tickets should be merged. Consider their similarity.
             The current ticket: '{self.ticket.title}' - {self.ticket.description}
@@ -213,15 +206,14 @@ class TicketMergingTests(TestCase):
                 similar_tickets.append(potential_ticket)
 
         # Test if the correct tickets are identified for merging
-        self.assertIn(self.ticket_2, similar_tickets)  # The second ticket should be considered similar
-        self.assertNotIn(self.ticket_3, similar_tickets)  # The third ticket should not be considered similar
+        self.assertIn(self.ticket_2, similar_tickets)  
+        self.assertNotIn(self.ticket_3, similar_tickets)
 
         # Check if a merged ticket entry is created for the primary ticket
         if similar_tickets:
             merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=self.ticket)
             self.assertTrue(created, "MergedTicket should be created")
             self.assertEqual(merged_ticket.primary_ticket, self.ticket)
-            #self.assertEqual(set(merged_ticket.suggested_merged_tickets.all()), {self.ticket_2})
 
         # Check that no unnecessary merged tickets are created for non-similar tickets
         merged_ticket_non_similar = MergedTicket.objects.filter(primary_ticket=self.ticket_3)
@@ -229,7 +221,6 @@ class TicketMergingTests(TestCase):
 
     @patch("tickets.ai_service.query_bedrock")
     def test_no_merge_for_dissimilar_tickets(self, mock_query_bedrock):
-        # Mocking the query_bedrock to return 'No' for dissimilar tickets
         mock_query_bedrock.return_value = "No"
 
         # Test when no tickets are similar
@@ -254,10 +245,8 @@ class TicketMergingTests(TestCase):
             if result.lower() == "yes":
                 similar_tickets.append(potential_ticket)
 
-        # Test that no tickets are added to the similar_tickets list
         self.assertEqual(len(similar_tickets), 0)
 
-        # No MergedTicket should be created when no tickets are similar
         merged_ticket = MergedTicket.objects.filter(primary_ticket=self.ticket)
         self.assertFalse(merged_ticket.exists())
 
@@ -310,8 +299,7 @@ class AWSClientInitializationTests(TestCase):
         mock_boto_client.side_effect = Exception("Initialization error")
 
         with self.assertRaises(RuntimeError) as context:
-            # Re-import the module to trigger the client initialization
             import tickets.ai_service
             importlib.reload(tickets.ai_service)
 
-        self.assertIn("❌ Error initializing AWS Bedrock client: Initialization error", str(context.exception))
+        self.assertIn("Error initializing AWS Bedrock client: Initialization error", str(context.exception))

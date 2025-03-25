@@ -30,7 +30,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.getElementById("login-form");
     loginForm.addEventListener("submit", function () {
-      fetch("{% url 'get_user_role' %}")  // AJAX request to get user role
+      fetch("{% url 'get_user_role' %}") 
         .then(response => response.json())
         .then(data => {
           let dashboardUrl = "/";

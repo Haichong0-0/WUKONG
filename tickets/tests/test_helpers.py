@@ -9,6 +9,7 @@ from tickets.helpers import (
     send_response_notification_email,
     send_updated_notification_email,
     handle_uploaded_file_in_chunks,
+    send_updated_notification_email_to_specialist_or_program_officer,
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -62,6 +63,41 @@ class EmailNotificationTests(TestCase):
 
         mock_send_mail.assert_called_once()
 
+    @patch("tickets.helpers.send_mail")
+    @patch("tickets.helpers.render_to_string")
+    def test_send_updated_notification_email_to_specialist_or_program_officer(
+        self, mock_render, mock_send_mail
+    ):
+        mock_render.return_value = "<p>Update Notice</p>"
+
+        send_updated_notification_email_to_specialist_or_program_officer(
+            "john.doe@university.edu",
+            "Assignment Help Needed",
+            "abc-123-ticket-id",
+            "student@uni.edu",
+            "Here is the updated info",
+        )
+
+        mock_render.assert_called_once_with(
+            "emails/update_notice.html",
+            {
+                "name": "john.doe",
+                "ticket_title": "Assignment Help Needed",
+                "response_message": "Here is the updated info",
+                "ticket_id": "abc-123-ticket-id",
+            },
+        )
+
+        mock_send_mail.assert_called_once()
+        args, kwargs = mock_send_mail.call_args
+
+        self.assertEqual(
+            args[0],
+            "Your assigned ticket is updated by student: 'Assignment Help Needed'",
+        )
+        self.assertIn("john.doe@university.edu", args[3])
+        self.assertEqual(kwargs["html_message"], "<p>Update Notice</p>")
+
 
 class FilterTicketsTests(TestCase):
     def setUp(self):
@@ -76,7 +112,9 @@ class FilterTicketsTests(TestCase):
         self.mock_filtered_2.order_by.return_value = self.mock_ordered
 
     def test_filter_by_search_and_status_and_sort(self):
-        request = self.factory.get("/?search=login&status=open&sort=priority_desc")
+        request = self.factory.get(
+            "/?search=login&status=in_progress&sort=priority_desc"
+        )
 
         result = filter_tickets(request, self.mock_queryset)
 
@@ -86,28 +124,30 @@ class FilterTicketsTests(TestCase):
         self.assertEqual(result, self.mock_ordered)
 
     def test_filter_with_date_asc(self):
-        request = self.factory.get("/?search=test&status=open&sort=date_asc")
+        request = self.factory.get("/?search=test&status=in_progress&sort=date_asc")
         result = filter_tickets(request, self.mock_queryset)
 
         self.mock_filtered_2.order_by.assert_called_with("created_at")
         self.assertEqual(result, self.mock_ordered)
 
     def test_filter_with_date_desc(self):
-        request = self.factory.get("/?search=test&status=open&sort=date_desc")
+        request = self.factory.get("/?search=test&status=in_progress&sort=date_desc")
         result = filter_tickets(request, self.mock_queryset)
 
         self.mock_filtered_2.order_by.assert_called_with("-created_at")
         self.assertEqual(result, self.mock_ordered)
 
     def test_filter_with_priority_asc(self):
-        request = self.factory.get("/?search=test&status=open&sort=priority_asc")
+        request = self.factory.get("/?search=test&status=in_progress&sort=priority_asc")
         result = filter_tickets(request, self.mock_queryset)
 
         self.mock_filtered_2.order_by.assert_called()
         self.assertEqual(result, self.mock_ordered)
 
     def test_filter_with_priority_desc(self):
-        request = self.factory.get("/?search=test&status=open&sort=priority_desc")
+        request = self.factory.get(
+            "/?search=test&status=in_progress&sort=priority_desc"
+        )
         result = filter_tickets(request, self.mock_queryset)
 
         self.mock_filtered_2.order_by.assert_called()
@@ -138,7 +178,7 @@ class GetFilteredTicketsTests(TestCase):
         self.ticket = Ticket.objects.create(
             title="Base query test",
             description="This should appear",
-            status="open",
+            status="in_progress",
             priority="low",
             creator=self.user,
         )
@@ -165,9 +205,9 @@ class GetFilteredTicketsTests(TestCase):
     def test_filter_with_status_only(self):
         self.mock_queryset.filter.reset_mock()
         result = get_filtered_tickets(
-            self.user, base_queryset=self.mock_queryset, status_filter="open"
+            self.user, base_queryset=self.mock_queryset, status_filter="in_progress"
         )
-        self.mock_queryset.filter.assert_called_once_with(status="open")
+        self.mock_queryset.filter.assert_called_once_with(status="in_progress")
         self.assertEqual(result, self.mock_filtered)
 
     def test_filter_with_search_and_status(self):
@@ -175,7 +215,7 @@ class GetFilteredTicketsTests(TestCase):
             self.user,
             base_queryset=self.mock_queryset,
             search_query="issue",
-            status_filter="open",
+            status_filter="in_progress",
         )
         self.assertEqual(self.mock_filtered.filter.call_count, 1)  # second filter
         self.assertEqual(result, self.mock_filtered)
@@ -185,7 +225,7 @@ class GetFilteredTicketsTests(TestCase):
             self.user,
             base_queryset=self.mock_queryset,
             search_query="x",
-            status_filter="open",
+            status_filter="in_progress",
             sort_option="date_asc",
         )
         self.assertTrue(self.mock_filtered.order_by.called)
@@ -194,28 +234,28 @@ class GetFilteredTicketsTests(TestCase):
 
     def test_sort_date_desc(self):
         result = get_filtered_tickets(
-            self.user, self.mock_queryset, "x", "open", "date_desc"
+            self.user, self.mock_queryset, "x", "in_progress", "date_desc"
         )
         self.mock_filtered.order_by.assert_called_with("-created_at")
         self.assertEqual(result, self.mock_ordered)
 
     def test_sort_priority_asc(self):
         result = get_filtered_tickets(
-            self.user, self.mock_queryset, "x", "open", "priority_asc"
+            self.user, self.mock_queryset, "x", "in_progress", "priority_asc"
         )
         self.mock_filtered.order_by.assert_called()
         self.assertEqual(result, self.mock_ordered)
 
     def test_sort_priority_desc(self):
         result = get_filtered_tickets(
-            self.user, self.mock_queryset, "x", "open", "priority_desc"
+            self.user, self.mock_queryset, "x", "in_progress", "priority_desc"
         )
         self.mock_filtered.order_by.assert_called()
         self.assertEqual(result, self.mock_ordered)
 
     def test_invalid_sort_option(self):
         result = get_filtered_tickets(
-            self.user, self.mock_queryset, "x", "open", "invalid_sort"
+            self.user, self.mock_queryset, "x", "in_porgess", "invalid_sort"
         )
         self.assertEqual(result, self.mock_filtered)
 
@@ -230,7 +270,7 @@ class HandleUploadedFileInChunksTests(TestCase):
         self.ticket = Ticket.objects.create(
             title="Test Ticket",
             description="This is a test ticket",
-            status="open",
+            status="in_progress",
             priority="low",
             creator=self.user,
         )

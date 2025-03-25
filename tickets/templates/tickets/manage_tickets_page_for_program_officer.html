@@ -190,14 +190,11 @@
                 </div>
             </form>
             </div>
-
-                
         </div>
 
         <div class="profile-actions d-flex justify-content-end align-items-center">
             <a href="{% url 'dashboard' %}" class="back-btn">← Back</a>
         </div>
-        
     </div>
 </div>
 
@@ -261,7 +258,7 @@
         let responseText = document.getElementById("response_message").value.trim();
         if (!responseText) {
             event.preventDefault();
-            alert("⚠️ Response message cannot be empty.");
+            alert("Response message cannot be empty.");
         }
     });
 
@@ -271,7 +268,7 @@
             let formData = new FormData(actionForm);
             let newAssigneeId = document.getElementById("new_assignee_id").value;
             if (!newAssigneeId) {
-                alert("⚠️ Please select a specialist.");
+                alert("Please select a specialist.");
                 return;
             }
 
@@ -290,7 +287,7 @@
                 if (data.success) {
                     window.location.href = data.redirect_url;
                 } else {
-                    alert("⚠️ " + data.error);
+                    alert(data.error);
                 }
             })
             .catch(error => console.error(" AJAX Error:", error));

@@ -11,7 +11,6 @@
             Create New Ticket
           </h1>
           
-          <!-- Use a <form> to hold csrf_token and form fields -->
           <div class="form-container">
             <form id="createTicketForm" method="post" enctype="multipart/form-data">
               {% csrf_token %}
@@ -120,22 +119,17 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   }
 
-  // 3) When user clicks "Submit", send an AJAX request via Fetch
+  // When user clicks "Submit", send an AJAX request via Fetch
   submitBtn.addEventListener("click", async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault(); 
 
-    // Build a FormData object from the form, which already includes the csrf token
     let formData = new FormData(createTicketForm);
 
-    // The form only has one <input type="file">, it won't automatically append multiple times 
-    // So we remove the fileInput key from FormData to avoid duplicates
     formData.delete("fileInput");
 
-    // Then we manually append each file in allFiles array
     allFiles.forEach(file => formData.append("file", file));
 
     try {
-      // Using fetch with credentials:'include' to ensure cookies (incl. csrftoken) are sent
       const response = await fetch("{% url 'create_ticket' %}?ajax=1", {
         method: "POST",
         body: formData,
@@ -143,16 +137,13 @@ document.addEventListener("DOMContentLoaded", function(){
       });
 
       if(!response.ok){
-        // e.g. 400, 500, etc.
         const msg = await response.text();
         alert("Failed to create ticket: " + msg);
         return;
       }
 
-      // Parse JSON response
       const data = await response.json();
       if(data.success){
-        // Redirect the user to the ticket detail page
         window.location.href = data.redirect_url;
       } else {
         alert("Error: " + data.error);
@@ -162,7 +153,6 @@ document.addEventListener("DOMContentLoaded", function(){
       console.error("AJAX error:", err);
       alert("Network error or server error!");
     }
-    // detect error 
   });
 });
 </script>

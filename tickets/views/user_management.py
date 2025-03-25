@@ -46,12 +46,12 @@ from django.contrib import messages
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     """Display user profile editing screen, and handle profile modifications."""
 
-    model = UserForm  # The model to update
-    template_name = "profile.html"  # Template to use
-    form_class = UserForm  # The form to render and validate
+    model = UserForm 
+    template_name = "profile.html"  
+    form_class = UserForm 
 
     def get_object(self):
-        """Return the object (user) to be updated."""
+        """Return the user object to be updated."""
         user = self.request.user
         return user
 
@@ -63,7 +63,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 @login_required
 def get_user_role(request):
-    """Return the role of the current user."""
+    #reutrn current user's role
     role = "unknown"
     if request.user.role in ["program_officer", "program_officers"]:
         role = "program_officer"

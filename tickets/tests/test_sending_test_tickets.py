@@ -53,8 +53,8 @@ class SendTestTicketsTest(TestCase):
             mail.send_mail(  
                 subject.strip(),
                 full_message.strip(),
-                student.email,  # Sender (From)
-                ["helpdesk@wukong.ac.uk"],  # Receiver (To: Help Desk)
+                student.email,
+                ["helpdesk@wukong.ac.uk"],
                 fail_silently=False,
             )
 

@@ -65,7 +65,6 @@ class TicketListView(ListView):
         if user.is_program_officer():
             return Ticket.objects.all()
 
-        # Specialists can only see tickets they edited
         else:
             return Ticket.objects.filter(
             Q(latest_editor=user) | Q(assigned_user=user)
@@ -73,7 +72,6 @@ class TicketListView(ListView):
 
 
     def dispatch(self, request, *args, **kwargs):
-        # Prevent students from accessing the general ticket list view
         if request.user.is_student():
             messages.error(
                 request, "You do not have permission to view the ticket list."
@@ -95,13 +93,9 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
 
-        # if request.user.is_authenticated and not request.user.is_student():
-        #     messages.error(request, "Only students can create tickets.")
-        #     return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
-        # Pass user info to the form
         kwargs = super().get_form_kwargs()
 
         kwargs["user"] = self.request.user
@@ -117,7 +111,6 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
         ticket.save()
 
-        # Save file attachments (if any)
         files = self.request.FILES.getlist("file")
         for f in files:
             handle_uploaded_file_in_chunks(ticket, f)
@@ -127,10 +120,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             ticket=ticket, action="created", action_by=self.request.user
         )
 
-        # Start AI processing logic
         ai_process_ticket(ticket)
-
-        # Send confirmation email
         send_ticket_confirmation_email(ticket)
 
         # Return success JSON
@@ -154,7 +144,6 @@ def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     attachments = ticket.attachments.order_by("uploaded_at")
 
-    # List of activity log entries with formatted times
     activities = TicketActivity.objects.filter(ticket=ticket).order_by("-action_time")
     formatted_activities = [
         {
@@ -166,7 +155,6 @@ def ticket_detail(request, ticket_id):
         for activity in activities
     ]
 
-    # Student submitted, staff returned to update
     if (
         not request.user.is_student()
         and ticket.status == "in_progress"
@@ -174,7 +162,6 @@ def ticket_detail(request, ticket_id):
     ):
         messages.warning(request, "This ticket is waiting for the student to update.")
 
-    # Ticket is still being handled by staff
     if (
         request.user.is_student()
         and ticket.status == "in_progress"
@@ -184,8 +171,7 @@ def ticket_detail(request, ticket_id):
         )
     ):
         messages.warning(request, "This ticket is waiting for the staff to process.")
-    
-    # Block access if user is unrelated to this ticket
+
     if (
         request.user != ticket.creator
         and request.user != ticket.latest_editor

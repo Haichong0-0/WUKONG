@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def close_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    #only student should use this function
     if request.user.is_student() and request.user == ticket.creator:
         ticket.status = "closed"
         ticket.can_be_managed_by_program_officers = False
@@ -94,6 +95,7 @@ def return_ticket(request, ticket_id):
     student_email = ticket.creator.email
     ticket_title = ticket.title
 
+    #return ticket to student
     if request.method == "POST":
         form = ReturnTicketForm(request.POST)
         if form.is_valid():
@@ -147,7 +149,7 @@ def redirect_ticket(request, ticket_id):
         return JsonResponse({"specialists": specialists})
 
     new_assignee_id = request.POST.get("new_assignee_id")
-
+    #if ticket was created when the bedrock was down, error will happen here
     try:
         ai_assigned_department = classify_department(ticket.description)
         ticket.assigned_department = ai_assigned_department
@@ -157,10 +159,12 @@ def redirect_ticket(request, ticket_id):
         ticket.assigned_department = ai_assigned_department
         ticket.save()
 
+
     if new_assignee_id == "ai":
         ticket.assigned_user = None
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
+        #access modifier
         ticket.can_be_managed_by_program_officers = False
         ticket.can_be_managed_by_specialist = True
         ticket.program_officer_resolved = False
@@ -238,9 +242,11 @@ def redirect_ticket(request, ticket_id):
 def merge_ticket(request, ticket_id, potential_ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     potential_ticket = get_object_or_404(Ticket, id=potential_ticket_id)
+    #merge ticket shouold be a singleton object associated with the primary ticket
     merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
     if potential_ticket in merged_ticket.approved_merged_tickets.all():
         merged_ticket.approved_merged_tickets.remove(potential_ticket)
+        #change button displaed in page
         action = "unmerged"
         messages.success(request, "Tickets unmerged successfully.")
     else:
@@ -302,6 +308,7 @@ def respond_ticket(request, ticket_id):
         response_message = request.POST.get("response_message")
         merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
         if merged_ticket and len(merged_ticket.approved_merged_tickets.all()) > 0:
+            #reply to all merged tickets
             for approved_ticket in merged_ticket.approved_merged_tickets.all():
                 approved_ticket.answers = (
                     approved_ticket.answers or ""
@@ -355,6 +362,7 @@ def respond_ticket(request, ticket_id):
 def update_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.user != ticket.creator:
+        #only student can and program officer can eidt ticket
         messages.error(request, "You do not have permission to modify this ticket.")
         return redirect("dashboard")
 
@@ -374,7 +382,7 @@ def update_ticket(request, ticket_id):
             ticket.specialist_resolved = True
         ticket.need_student_update = False
         ticket.save()
-        if assigned_user != request.user:
+        if assigned_user and assigned_user != request.user:
             send_updated_notification_email_to_specialist_or_program_officer(
                 assigned_user.email,
                 ticket.title,
@@ -497,7 +505,7 @@ def manage_ticket_page(request, ticket_id):
             },
         )
 
-
+#do not modify this function
 def get_specialists(ticket):
     try:
         ai_assigned_department = classify_department(ticket.description)

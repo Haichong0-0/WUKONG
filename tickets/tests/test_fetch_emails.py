@@ -24,15 +24,12 @@ from email.header import Header
 from django.core.files.base import ContentFile
 from email.message import EmailMessage
 
-# Setup Django environment
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "query_hub.settings")
 django.setup()
 
 
 class FetchEmailsTest(TransactionTestCase):
-    """Test the fetch_emails command"""
 
     def setUp(self):
         """Creates a Ticket and User before each test"""
@@ -146,13 +143,13 @@ class FetchEmailsTest(TransactionTestCase):
         self.assertLess(
             old_ticket.created_at,
             now() - timedelta(days=7),
-            "❌ created_at date is not 8 days ago",
+            "created_at date is not 8 days ago",
         )
         duplicate_ticket = self.command.is_duplicate_ticket(
             self.sender_email, self.subject, self.body
         )
         # Ensure the ticket can be resubmitted after 7 days without a response
-        self.assertIsNone(duplicate_ticket, "❌ Duplicate ticket detected after 7 days")
+        self.assertIsNone(duplicate_ticket, "Duplicate ticket detected after 7 days")
 
     def test_duplicate_ticket_email_notification(self):
         """Test that a duplicate ticket sends a notification email."""
@@ -174,24 +171,24 @@ class FetchEmailsTest(TransactionTestCase):
         )
 
         # Verify an email was sent
-        self.assertEqual(len(mail.outbox), 1, "❌ No email sent")
+        self.assertEqual(len(mail.outbox), 1, "No email sent")
 
         sent_mail = mail.outbox[0]
         self.assertIn(
             "Duplicate Ticket Submission",
             sent_mail.subject,
-            "❌ Email subject is incorrect",
+            "Email subject is incorrect",
         )
 
         self.assertIn(
             "You have already submitted a ticket",
             sent_mail.body,
-            "❌ Email body is incorrect",
+            "Email body is incorrect",
         )
         self.assertIn(
             str(existing_ticket.id),
             sent_mail.body,
-            "❌ Ticket ID not found in email body",
+            "Ticket ID not found in email body",
         )
 
     def test_skip_failure_notification(self):
@@ -212,7 +209,7 @@ class FetchEmailsTest(TransactionTestCase):
 
             # Ensure no ticket was created
             ticket = Ticket.objects.first()
-            self.assertIsNone(ticket, "❌ Ticket created for failure notification")
+            self.assertIsNone(ticket, "Ticket created for failure notification")
 
     @patch("django.conf.settings.TESTING", False)
     def test_is_spam_detects_high_score(self):
@@ -232,13 +229,13 @@ class FetchEmailsTest(TransactionTestCase):
 
     def test_is_spam_handles_api_failure(self):
         """Test is_spam returns False when the API fails"""
-        self.mock_post.return_value.status_code = 500  # Return a server error
+        self.mock_post.return_value.status_code = 500  
         self.mock_post.return_value.text = (
-            "Internal Server Error"  # Return a server error message
+            "Internal Server Error"  
         )
         self.mock_post.return_value.json.side_effect = ValueError(
             "Invalid JSON"
-        )  # Raise an exception
+        )  
 
         result = self.command.is_spam("Test subject", "Test body")
         self.assertFalse(result, "API failure should return False")
@@ -318,9 +315,8 @@ class FetchEmailsTest(TransactionTestCase):
         mock_send_duplicate_notice.assert_called_once_with(
             sender_email, subject, dummy_ticket.id
         )
-        # Assert that no new ticket was created.
+
         self.assertEqual(Ticket.objects.count(), 0)
-        # Assert that a user was created.
         self.assertTrue(User.objects.filter(email=sender_email).exists())
 
     @patch("tickets.management.commands.fetch_emails.imaplib.IMAP4_SSL")
@@ -338,7 +334,7 @@ class FetchEmailsTest(TransactionTestCase):
             mock_stderr.assert_called()
             error_message = mock_stderr.call_args[0][0]
             self.assertIn(
-                "❌ Error fetching emails: IMAP Connection Failed", error_message
+                "Error fetching emails: IMAP Connection Failed", error_message
             )
 
     def test_categorize_ticket_academic_support(self):
@@ -349,9 +345,9 @@ class FetchEmailsTest(TransactionTestCase):
 
         department = self.command.categorize_ticket(subject, body)
 
-        self.assertIsNotNone(department, "❌ Department should not be None")
+        self.assertIsNotNone(department, "Department should not be None")
         self.assertEqual(
-            department.name, "academic_support", "❌ Incorrect department assigned"
+            department.name, "academic_support", "Incorrect department assigned"
         )
 
     def test_old_ticket_with_no_response_allows_resubmission(self):
@@ -361,13 +357,13 @@ class FetchEmailsTest(TransactionTestCase):
 
         self.old_ticket_no_response.refresh_from_db()
         response_count = self.old_ticket_no_response.responses.count()
-        self.assertEqual(response_count, 0, "❌ Ticket should have no responses")
+        self.assertEqual(response_count, 0, "Ticket should have no responses")
 
         duplicate_ticket = self.command.is_duplicate_ticket(
             self.sender_email, self.subject, self.body
         )
         self.assertIsNone(
-            duplicate_ticket, "❌ Duplicate ticket should be allowed for resubmission"
+            duplicate_ticket, "Duplicate ticket should be allowed for resubmission"
         )
 
     @patch.object(Command, "send_duplicate_notice")
@@ -389,18 +385,18 @@ class FetchEmailsTest(TransactionTestCase):
             self.sender_email, self.subject, self.body
         )
 
-        # ✅ ensure return old_ticket_no_response
+        # ensure return old_ticket_no_response
         self.assertIsNotNone(
             duplicate_ticket,
-            "❌ Duplicate ticket should NOT be allowed for resubmission",
+            "Duplicate ticket should NOT be allowed for resubmission",
         )
         self.assertEqual(
             duplicate_ticket.id,
             self.old_ticket_no_response.id,
-            "❌ Incorrect duplicate ticket detected",
+            "Incorrect duplicate ticket detected",
         )
 
-        # ✅ enture send_duplicate_notice is called
+        # enture send_duplicate_notice is called
         mock_send_duplicate_notice.assert_called_once_with(
             self.sender_email, self.subject, self.old_ticket_no_response.id
         )
@@ -420,7 +416,7 @@ class FetchEmailsTest(TransactionTestCase):
         # varify print is called with the correct error message
         mock_print.assert_called_once()
         args, kwargs = mock_print.call_args
-        self.assertEqual(args[0], "❌ Error connecting to Perspective API:")
+        self.assertEqual(args[0], "Error connecting to Perspective API:")
         self.assertIn("API Timeout", str(args[1]))
 
     @override_settings(TESTING=False)
@@ -441,7 +437,7 @@ class FetchEmailsTest(TransactionTestCase):
 
         # Verify that the error message is printed
         mock_print.assert_called_once_with(
-            "❌ Invalid JSON response from Perspective API"
+            "Invalid JSON response from Perspective API"
         )
 
     def test_multipart_first_valid_part(self):
@@ -458,13 +454,10 @@ class FetchEmailsTest(TransactionTestCase):
         msg["Subject"] = subject
         msg["From"] = from_addr
 
-        # Attachments should be
-        # ignored, only the first text/plain part should be used
         part_attachment = MIMEText("Attachment content", "plain", "utf-8")
         part_attachment.add_header("Content-Disposition", "attachment")
         msg.attach(part_attachment)
 
-        # Then add a valid text/plain part
         part_valid = MIMEText(valid_text, "plain", "utf-8")
         part_valid.add_header("Content-Disposition", "inline")
         msg.attach(part_valid)
@@ -569,7 +562,7 @@ class FetchEmailsTest(TransactionTestCase):
                 mock_stderr.write.assert_called_once()
                 logged_message = mock_stderr.write.call_args[0][0]
                 assert (
-                    "❌ Error saving attachment: Mocked attachment error"
+                    "Error saving attachment: Mocked attachment error"
                     in logged_message
                 )
 
@@ -599,7 +592,7 @@ class FetchEmailsTest(TransactionTestCase):
 
             mock_stderr.write.assert_called_once()
             error_msg = mock_stderr.write.call_args[0][0]
-            self.assertIn("❌ Error processing email: Simulated fetch error", error_msg)
+            self.assertIn("Error processing email: Simulated fetch error", error_msg)
 
             fake_mail.store.assert_called_with(b"1", "+FLAGS", "\\Seen")
 
@@ -624,7 +617,7 @@ class FetchEmailsTest(TransactionTestCase):
             subject, sender, body, attachments = command.parse_email_message(msg)
 
             self.assertEqual(
-                subject, "DummySubject", "❌ subject did not fallback to str(part)"
+                subject, "DummySubject", "subject did not fallback to str(part)"
             )
 
     def test_subject_decode_exception_printed(self):
@@ -648,7 +641,7 @@ class FetchEmailsTest(TransactionTestCase):
             subject, sender, body, attachments = command.parse_email_message(msg)
             mock_print.assert_called_once()
             printed_args = mock_print.call_args[0]
-            self.assertIn("❌ Error decoding subject part:", printed_args[0])
+            self.assertIn("Error decoding subject part:", printed_args[0])
             self.assertIsInstance(printed_args[1], ValueError)
             self.assertEqual(str(printed_args[1]), "bad part")
 
@@ -735,7 +728,7 @@ class FetchEmailsTest(TransactionTestCase):
         subject, sender, body, attachments = self.command.parse_email_message(msg)
 
         self.assertEqual(
-            body, "[Decode Error]", "❌ Expected '[Decode Error]' on decode failure"
+            body, "[Decode Error]", "Expected '[Decode Error]' on decode failure"
         )
         mock_print.assert_not_called()
 
@@ -762,7 +755,7 @@ class FetchEmailsTest(TransactionTestCase):
 
             mock_print.assert_called_once()
             printed = mock_print.call_args[0][0]
-            self.assertIn("❌ Error parsing email message:", printed)
+            self.assertIn("Error parsing email message:", printed)
 
     def test_part_payload_is_str(self):
         """Test that when part_payload is a string, it is used directly as the body."""
@@ -831,7 +824,7 @@ class FetchEmailsTest(TransactionTestCase):
 
         subject, sender, body, attachments = self.command.parse_email_message(msg)
 
-        self.assertEqual(len(attachments), 0, "❌ Should skip invalid attachment data")
+        self.assertEqual(len(attachments), 0, "Should skip invalid attachment data")
 
     def test_valid_attachment_saved(self):
         """Test that a valid attachment is added to the attachments list."""
@@ -907,7 +900,7 @@ class FetchEmailsTest(TransactionTestCase):
 
         self.command.parse_email_message(msg)
 
-        mock_print.assert_any_call("❌ Error decoding attachment filename:", ANY)
+        mock_print.assert_any_call("Error decoding attachment filename:", ANY)
 
     def test_non_multipart_payload_is_str(self):
         """Test that non-multipart email with string payload sets body directly."""
@@ -940,7 +933,7 @@ class FetchEmailsTest(TransactionTestCase):
         self.assertEqual(
             body,
             "[Decode Error]",
-            "❌ decode error should fallback to '[Decode Error]'",
+            "decode error should fallback to '[Decode Error]'",
         )
 
     def test_non_multipart_payload_is_str_line_409_true_mocked(self):

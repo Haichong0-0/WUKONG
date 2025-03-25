@@ -118,9 +118,9 @@ class GetUserRoleTests(TestCase):
     ]
 
     def setUp(self):
-        self.program_officer = User.objects.get(username="@janedoe")  # Program officer
-        self.student = User.objects.get(username="@petrapickles")  # Student
-        self.specialist = User.objects.get(username="@peterpickles")  # Specialist
+        self.program_officer = User.objects.get(username="@janedoe")  
+        self.student = User.objects.get(username="@petrapickles")  
+        self.specialist = User.objects.get(username="@peterpickles")  
         self.url = reverse("get_user_role")
 
     def test_get_user_role_program_officer(self):

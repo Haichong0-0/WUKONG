@@ -1,6 +1,6 @@
 from unittest.mock import patch, ANY, MagicMock
-
-from django.test import TestCase
+from django.core import mail
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.http import HttpResponse
@@ -301,7 +301,7 @@ class RedirectTicketViewTestCase(TestCase):
             self.ticket.assigned_department = "general_enquiry"
             self.ticket.save()
             specialists = get_specialists(self.ticket)
-            self.assertEqual(specialists[0]["department"], "general_enquiry")
+            self.assertEqual(specialists[0]["department_name"], "general_enquiry")
 
     @patch(
         "tickets.views.ticket_operations.classify_department", return_value="it_support"
@@ -313,7 +313,9 @@ class RedirectTicketViewTestCase(TestCase):
         specialists = get_specialists(self.ticket)
 
         self.assertTrue(any("(recommend)" in spec["username"] for spec in specialists))
-        self.assertTrue(any(spec["department"] == "it_support" for spec in specialists))
+        self.assertTrue(
+            any(spec["department_name"] == "it_support" for spec in specialists)
+        )
 
     @patch("tickets.models.Ticket.save", autospec=True)
     @patch(
@@ -529,6 +531,8 @@ class TicketManageViewTestCase(TestCase):
 
     def test_update_ticket_by_specialist_sets_specialist_resolved(self):
         self.ticket.creator = self.specialist
+
+        self.assigned_user = self.specialist
         self.ticket.save()
 
         self.client.login(username="@specialist", password="Password123")
@@ -587,6 +591,8 @@ class TicketManageViewTestCase(TestCase):
 
     def test_manage_ticket_page_student_update_ticket(self):
         self.client.login(username="@student", password="Password123")
+        self.ticket.assigned_user = self.student
+        self.ticket.save()
         url = reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id})
         response = self.client.post(
             url, {"action_type": "update_ticket", "update_message": "Update via manage"}
@@ -609,6 +615,8 @@ class TicketManageViewTestCase(TestCase):
 
     def test_manage_ticket_page_program_officer_get(self):
         self.client.login(username="@officer", password="Password123")
+        self.ticket.assigned_user = self.officer
+        self.ticket.save()
         AITicketProcessing.objects.create(
             ticket=self.ticket, ai_assigned_department=self.department.name
         )
@@ -702,6 +710,33 @@ class TicketManageViewTestCase(TestCase):
             response = self.client.post(url, {"action_type": "redirect_ticket"})
             self.assertEqual(response.content, b"redirect ticket")
             mock_redirect.assert_called_once_with(ANY, ticket_id=self.ticket.id)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_update_ticket_triggers_notification(self):
+        self.client.login(username="@student", password="Password123")
+
+        self.ticket.creator = self.student
+        self.ticket.assigned_user = self.officer
+        self.ticket.latest_editor = self.officer
+        self.ticket.save()
+
+        response = self.client.post(
+            reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id}),
+            {
+                "action_type": "update_ticket",
+                "update_message": "Student updated the ticket",
+            },
+        )
+
+        self.ticket.refresh_from_db()
+        self.assertIn("Student updated the ticket", self.ticket.description)
+        self.assertEqual(response.status_code, 302)
+
+        from django.core import mail
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.officer.email, mail.outbox[0].to)
+        self.assertIn("updated by student", mail.outbox[0].subject.lower())
 
 
 class MergeTicketViewTestCase(TestCase):

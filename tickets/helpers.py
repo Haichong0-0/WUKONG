@@ -116,6 +116,8 @@ def send_notification_email_to_specialist(
 
     html_message = render_to_string("emails/notice_to_specialist.html", context)
     text_message = strip_tags(html_message)
+    # Plain text version
+    # http shown in email if not cleared
 
     send_mail(
         subject,
@@ -126,11 +128,10 @@ def send_notification_email_to_specialist(
         html_message=html_message,
     )
 
-
+# This function sends an email to the specialist when their ticket has been updated.
 def send_updated_notification_email_to_specialist_or_program_officer(
     school_email, ticket_title, ticket_id, student_email, response_message
 ):
-    """Sends an email to notify the specialist they are assigned to a ticket."""
 
     subject = f"Your assigned ticket is updated by student: '{ticket_title}'"
 
@@ -160,6 +161,7 @@ def filter_tickets(request, tickets):
     status_filter = request.GET.get("status", "")
     sort_option = request.GET.get("sort", "")
 
+    # Define priority sorting
     priority_case = Case(
         When(priority="urgent", then=4),
         When(priority="high", then=3),
@@ -175,7 +177,7 @@ def filter_tickets(request, tickets):
 
     if status_filter:
         tickets = tickets.filter(status=status_filter)
-
+    # Sort tickets based on the selected option
     if sort_option == "date_asc":
         tickets = tickets.order_by("created_at")
     elif sort_option == "date_desc":
@@ -212,7 +214,7 @@ def get_filtered_tickets(
         When(priority="low", then=1),
         output_field=IntegerField(),
     )
-
+    # Sort tickets based on the selected option
     if sort_option == "date_asc":
         base_queryset = base_queryset.order_by("created_at")
     elif sort_option == "date_desc":
@@ -233,7 +235,7 @@ def handle_uploaded_file_in_chunks(ticket, file_obj, filename=None):
 
     filename = get_valid_filename(filename or "unnamed_attachment")
     attachment = TicketAttachment(ticket=ticket)
-
+    # Save the file to the ticket
     try:
         if isinstance(file_obj, bytes):
             content = ContentFile(file_obj)

@@ -30,14 +30,13 @@ class DjangoSeleniumTests(unittest.TestCase):
         driver = self.driver
         driver.get("http://127.0.0.1:8000/")
 
-        # Ensure custom CSS is applied (check an element styled by custom.css)
+        # Ensure custom CSS is applied
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "container-box"))
         )
         content_element = driver.find_element(By.CLASS_NAME, "container-box")
         self.assertTrue(content_element.is_displayed(), "CSS may not be applied correctly")
 
-        # Get and print the color of the LOG IN button (check CSS styles)
         login_button = driver.find_element(By.LINK_TEXT, "LOG IN")
         color = login_button.value_of_css_property("color")
 
@@ -82,7 +81,6 @@ class DjangoSeleniumTests(unittest.TestCase):
             EC.presence_of_element_located((By.NAME, "username"))
         )
 
-        # Verify the URL is correct
         current_url = driver.current_url
         self.assertIn("log_in", current_url)
 

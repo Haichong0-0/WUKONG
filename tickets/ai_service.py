@@ -104,12 +104,9 @@ def ai_process_ticket(ticket):
 
 
 def find_potential_tickets_to_merge(ticket):
-    """
-    Find potential tickets that can be merged with the current ticket by evaluating
-    their descriptions using the AI model.
-    """
 
     # Fetch open tickets that are not the current ticket
+    # only same department tickets to save processing time
     ai_assigned_department = ticket.ai_processing.ai_assigned_department
     potential_tickets = Ticket.objects.filter(
         status="in_progress",
