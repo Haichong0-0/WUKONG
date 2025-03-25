@@ -145,6 +145,7 @@ class Command(BaseCommand):
         self.faker = Faker("en_GB")
 
     def handle(self, *args, **options):
+
         # Seed Departments
         self.seed_departments()
 
@@ -317,7 +318,7 @@ class Command(BaseCommand):
         for ticket in created_tickets:
             ai_process_ticket(ticket)
             new_ai_tickets_count += 1
-            #print_ticket(ticket)
+            # print_ticket(ticket)
         self.stdout.write(
             self.style.SUCCESS(f"Successfully answered {new_ai_tickets_count} tickets.")
         )

@@ -139,7 +139,7 @@
                     <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                         {% for specialist in specialists %}
                         <option value="{{ specialist.id }}">
-                            {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                            {{ specialist.username }} - {{ specialist.department_name }} ({{ specialist.open_tickets }} open tickets)
                         {% endfor %}
                     </select>
                     <button type="submit" id="redirect_submit_btn" class="btn btn-success mt-3">Submit</button>

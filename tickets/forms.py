@@ -38,7 +38,7 @@ class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""
 
     new_password = forms.CharField(
-        label="Password",
+        label="New Password",
         widget=forms.PasswordInput(),
         validators=[
             RegexValidator(
@@ -49,25 +49,32 @@ class NewPasswordMixin(forms.Form):
         ],
     )
     password_confirmation = forms.CharField(
-        label="Password confirmation", widget=forms.PasswordInput()
+        label="New Password confirmation", widget=forms.PasswordInput()
     )
 
     def clean(self):
         """Form mixing for new_password and password_confirmation fields."""
 
+        password = self.cleaned_data.get("password")
+
+        if self.user is not None:
+            user = authenticate(username=self.user.username, password=password)
+        else:
+            user = None
+
+        if user is None:
+            self.add_error("password", "Password is invalid")
+            return  
+
+    
         super().clean()
-        new_password = self.cleaned_data.get("new_password")
-        password_confirmation = self.cleaned_data.get("password_confirmation")
-        if new_password != password_confirmation:
-            self.add_error(
-                "password_confirmation", "Confirmation does not match password."
-            )
+
 
 
 class PasswordForm(NewPasswordMixin):
     """Form enabling users to change their password."""
 
-    password = forms.CharField(label="Current password", widget=forms.PasswordInput())
+    password = forms.CharField(label="Previous password", widget=forms.PasswordInput())
 
     def __init__(self, user=None, **kwargs):
         """Construct new form instance with a user instance."""

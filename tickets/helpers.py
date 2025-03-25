@@ -127,6 +127,33 @@ def send_notification_email_to_specialist(
     )
 
 
+def send_updated_notification_email_to_specialist_or_program_officer(
+    school_email, ticket_title, ticket_id, student_email, response_message
+):
+    """Sends an email to notify the specialist they are assigned to a ticket."""
+
+    subject = f"Your assigned ticket is updated by student: '{ticket_title}'"
+
+    context = {
+        "name": school_email.split("@")[0],
+        "ticket_title": ticket_title,
+        "response_message": response_message,
+        "ticket_id": ticket_id,
+    }
+
+    html_message = render_to_string("emails/update_notice.html", context)
+    text_message = strip_tags(html_message)
+
+    send_mail(
+        subject,
+        text_message,
+        settings.EMAIL_HOST_USER,
+        [school_email],
+        fail_silently=False,
+        html_message=html_message,
+    )
+
+
 def filter_tickets(request, tickets):
     """Filter tickets based on search query, status filter and sort option."""
     search_query = request.GET.get("search", "")

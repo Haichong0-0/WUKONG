@@ -67,7 +67,9 @@ class TicketListView(ListView):
 
         # Specialists can only see tickets they edited
         else:
-            return Ticket.objects.filter(latest_editor=user)
+            return Ticket.objects.filter(
+            Q(latest_editor=user) | Q(assigned_user=user)
+        )
 
 
     def dispatch(self, request, *args, **kwargs):

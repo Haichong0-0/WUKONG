@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Updated Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            padding: 20px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .header {
+            background-color: #004085;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px 6px 0 0;
+            font-size: 18px;
+        }
+        .content {
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 6px 6px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #888;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .message-box {
+            background-color: #f1f1f1;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            font-style: italic;
+            margin: 15px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Ticket Updated by Student
+        </div>
+        <div class="content">
+            <p>Hello {{ recipient_name }},</p>
+
+            <p>The student <strong>{{ student_email }}</strong> has updated their ticket:</p>
+
+            <p><strong>Title:</strong> {{ ticket_title }}</p>
+            <p><strong>Ticket ID:</strong> {{ ticket_id }}</p>
+
+            <div class="message-box">
+                {{ response_message }}
+            </div>
+            <div class="footer">
+                <p>Best regards,</p>
+                <p>WuKong Help Desk</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
+from django.utils.html import escape
 from django.views.decorators.http import require_POST
 from tickets.ai_service import (
     ai_process_ticket,
@@ -22,6 +23,7 @@ from tickets.helpers import (
     send_updated_notification_email,
     send_response_notification_email,
     send_notification_email_to_specialist,
+    send_updated_notification_email_to_specialist_or_program_officer,
 )
 from tickets.models import (
     DailyTicketClosureReport,
@@ -231,7 +233,6 @@ def redirect_ticket(request, ticket_id):
     return JsonResponse({"error": "No specialist selected"}, status=400)
 
 
-#### 需修改: ????测试服务覆盖，没有相应的url
 @login_required
 @require_POST
 def merge_ticket(request, ticket_id, potential_ticket_id):
@@ -358,10 +359,11 @@ def update_ticket(request, ticket_id):
         return redirect("dashboard")
 
     if request.method == "POST" and "update_message" in request.POST:
-        update_message = request.POST.get("update_message")
+        update_message = escape(request.POST.get("update_message"))
         ticket.description += f"\n\nAdded Information:\n{update_message}"
         ticket.status = "in_progress"
         ticket.latest_action = "status_updated"
+        assigned_user = ticket.latest_editor
         ticket.assigned_user = ticket.latest_editor
         ticket.latest_editor = request.user
         ticket.can_be_managed_by_specialist = True
@@ -372,6 +374,14 @@ def update_ticket(request, ticket_id):
             ticket.specialist_resolved = True
         ticket.need_student_update = False
         ticket.save()
+        if assigned_user != request.user:
+            send_updated_notification_email_to_specialist_or_program_officer(
+                assigned_user.email,
+                ticket.title,
+                ticket.id,
+                ticket.creator.email,
+                update_message,
+            )
         TicketActivity.objects.create(
             ticket=ticket,
             action="status_updated",
@@ -516,7 +526,7 @@ def get_specialists(ticket):
 
     for spec in specialists_list:
         dept_name = spec.department.name if spec.department else ""
-        if dept_name == ai_assigned_department:
+        if dept_name.lower().replace(" ", "_") == ai_assigned_department.lower():
             spec.username = f"{spec.username} (recommend)"
             recommended_list.append(spec)
         else:
@@ -527,6 +537,8 @@ def get_specialists(ticket):
             id="ai",
             username=f"---------- {ai_assigned_department} (recommend) ----------",
             department=SimpleNamespace(name=ai_assigned_department),
+            open_tickets=0,
+            is_ai=True,
         )
         recommended_list = [dummy_spec]
 
@@ -534,9 +546,11 @@ def get_specialists(ticket):
         {
             "id": spec.id,
             "username": spec.username,
-            "department": spec.department.name if spec.department else "",
+            "department_name": (
+                getattr(spec.department, "name", "") if spec.department else ""
+            ),
             "open_tickets": getattr(spec, "open_tickets", 0),
-            "is_ai": False,
+            "is_ai": getattr(spec, "is_ai", False),
         }
         for spec in recommended_list + non_recommended_list
     ]

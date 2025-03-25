@@ -60,7 +60,7 @@
         {% for ticket in student_tickets %}
           <div class="ticket-row">
             <div class="ticket-title">{{ ticket.title }}</div>
-            <div>{{ ticket.status }}</div>
+            <div>{{ ticket.get_status_name }}</div>
             <div>{{ ticket.priority }}</div>
             <div data-date-value="{{ ticket.created_at|date:'Y-m-d H:i:s' }}">
                 {{ ticket.created_at|date:'Y-m-d H:i:s' }}
