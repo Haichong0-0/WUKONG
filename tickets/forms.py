@@ -55,20 +55,13 @@ class NewPasswordMixin(forms.Form):
     def clean(self):
         """Form mixing for new_password and password_confirmation fields."""
 
-        password = self.cleaned_data.get("password")
-
-        if self.user is not None:
-            user = authenticate(username=self.user.username, password=password)
-        else:
-            user = None
-
-        if user is None:
-            self.add_error("password", "Password is invalid")
-            return  
-
-    
         super().clean()
-
+        new_password = self.cleaned_data.get("new_password")
+        password_confirmation = self.cleaned_data.get("password_confirmation")
+        if new_password != password_confirmation:
+            self.add_error(
+                "password_confirmation", "Confirmation does not match password."
+            )
 
 
 class PasswordForm(NewPasswordMixin):
