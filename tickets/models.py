@@ -61,7 +61,7 @@ class User(AbstractUser):
         ordering = ["last_name", "first_name"]
 
     def clean(self):
-        # Specialists must have a department
+        # Specialists must have a department.
         if self.role == "specialists" and not self.department:
             raise ValidationError("Specialists must have a department.")
 
@@ -106,7 +106,7 @@ class Ticket(models.Model):
         ("in_progress", "In Progress"),
         ("closed", "Closed"),
     ]
-    ## get_priority_choices function
+    ## get_priority_choices function.
     PRIORITY_CHOICES = [
         ("low", "Low"),
         ("medium", "Medium"),
@@ -182,7 +182,7 @@ class Ticket(models.Model):
     sender_email = models.EmailField(blank=True, null=True)
     return_reason = models.TextField(
         blank=True, null=True
-    )  # Reason for returning the ticket
+    )  # Reason for returning the ticket.
     can_be_managed_by_program_officers = models.BooleanField(
         default=True,
         help_text="Whether the ticket can be managed by the current user.",
@@ -210,7 +210,7 @@ class Ticket(models.Model):
     def save(self, *args, **kwargs):
         if (
             self.latest_action is None
-        ):  # If no action has yet been recorded, set a default action
+        ):  # If no action has yet been recorded, set a default action.
             self.latest_action = "created"
         super().save(*args, **kwargs)
 
@@ -310,7 +310,7 @@ class AITicketProcessing(models.Model):
 
 
 class MergedTicket(models.Model):
-    # A ticket that will be used as the main one to answer for the merged tickets
+    # A ticket that will be used as the main one to answer for the merged tickets.
     primary_ticket = models.OneToOneField(
         Ticket, related_name="primary_ticket", on_delete=models.CASCADE, unique=True
     )
@@ -334,7 +334,7 @@ class DailyTicketClosureReport(models.Model):
     closed_manually = models.PositiveIntegerField(default=0)
     in_progress = models.PositiveIntegerField(
         default=0
-    )  # Add this field with a default value
+    )  # Add this field with a default value.
 
     class Meta:
         unique_together = ("date", "department")
